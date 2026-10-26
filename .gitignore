@@ -1,0 +1,5 @@
+/.codex-handoffs/
+/node_modules/
+/dist/
+/.cache/
+*.tsbuildinfo
