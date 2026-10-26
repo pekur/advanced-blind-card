@@ -1,5 +1,6 @@
 /.codex-handoffs/
 /node_modules/
-/dist/
+/dist/*
+!/dist/advanced-blind-card.js
 /.cache/
 *.tsbuildinfo

@@ -171,9 +171,12 @@ Nevytvářet automaticky `next-implementer-prompt.md`, přepisované handoff sou
 ## 9. Schválená distribuční rozhodnutí a zbývající body
 
 - Schválený veřejný název: **Advanced Blind Card**, název repozitáře `advanced-blind-card`; lokální adresář se nepřejmenovává.
+- Zvolený budoucí veřejný cíl: `https://github.com/pekur/advanced-blind-card`. Výběr cíle ani lokální commit neschvalují vytvoření repozitáře, remote operace nebo publikaci.
 - Schválená licence: **MIT**, copyright **2026 Petr Kurka**. Přibalené knihovny si zachovávají vlastní licenční oznámení v distribuovaném JS.
 - Schválená první verze pro lokální přípravu: **0.1.0-beta.1**. Veřejný GitHub repozitář, remote operace a publikace vyžadují samostatný výslovný souhlas; samotná příprava balíčku vydání neprovádí.
+- Schválené balení pro první beta-only distribuci: verzovat právě `dist/advanced-blind-card.js`, ostatní generované výstupy ignorovat. HACS 2.0.5 při prvním přidání standardně odfiltruje prerelease; tento soubor slouží pro validaci struktury repozitáře. Výstup buildu, verzovaný JS a budoucí release asset musí být totožné; zachovat LF. Manifest ponechá `hide_default_branch: true`, budoucí tag `v0.1.0-beta.1` bude prerelease a při instalaci se výslovně vybere beta verze.
 - Skutečná instalace přes HACS a minimální podporované verze HA/HACS zatím nejsou ověřené. Zbývající testovací mezery musí zůstat uvedené před rozhodnutím o veřejném vydání.
+- Vlastníkem hlášené prostředí pro plánovaný HACS test: integrace **2.0.5**, frontend **20250128065759**. Nejde o ověřené minimum podpory; skutečná registrace, instalace, aktualizace a pasivní kontrola v HA vyžadují samostatný souhlas.
 - Jak přesně vypadá mapování `current_tilt_position` na skutečný úhel u různých motorů; v1 použije konfigurovatelné lineární vizuální mapování.
 - Jak nejlépe zobrazit skupinové rozsahy na velmi úzkém mobilním displeji.
 - Grafický editor pokrývá globální volby; definice entit, skupin a jejich přepsání zůstává v YAML.

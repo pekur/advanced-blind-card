@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!PROJECT_PLAN.md", "!pnpm-lock.yaml"]
+    "includes": ["**", "!dist", "!PROJECT_PLAN.md", "!pnpm-lock.yaml"]
   },
   "formatter": {
     "indentStyle": "space",

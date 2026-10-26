@@ -242,20 +242,40 @@ For an unreleased rebuild, use a new hash suffix even if the version is unchange
 
 ### HACS distribution preparation
 
-The intended repository name is `advanced-blind-card`, with one matching
-`advanced-blind-card.js` release asset. The local `hacs.json` hides the default
-branch because generated `dist/` is not tracked. A public GitHub repository and
-published release asset are required before this route can be used; neither is
-created by building this checkout. See the official
-[HACS dashboard requirements](https://www.hacs.dev/docs/publish/plugin/) and
-[manifest/release rules](https://www.hacs.dev/docs/publish/start/).
+The planned public repository is `https://github.com/pekur/advanced-blind-card`.
+It has not been published by this preparation. The intended first release is
+`v0.1.0-beta.1`, marked as a prerelease, with one `advanced-blind-card.js` asset.
+Creating the public repository and release requires separate maintainer approval.
 
-Once a separately authorized public release exists, add its actual repository URL
-to HACS as a Dashboard custom repository and install the chosen release. Use the
-resource provided by HACS instead of retaining a second manual resource. On update,
-download through HACS and refresh the dashboard cache. Actual HACS installation,
-updating and prerelease selection have not been tested; no repository URL is
-invented here.
+The owner has HACS 2.0.5 (frontend 20250128065759). In that version, beta releases
+are filtered out by default when registering a custom repository. To allow the
+initial repository validation, Git tracks exactly `dist/advanced-blind-card.js`
+as a fallback; other generated files remain ignored. See the pinned HACS 2.0.5
+[release filtering](https://github.com/hacs/integration/blob/2.0.5/custom_components/hacs/repositories/base.py)
+and [JS discovery](https://github.com/hacs/integration/blob/2.0.5/custom_components/hacs/repositories/plugin.py).
+This source-level check is not an actual HACS installation test.
+
+#### Installation after publication
+
+1. Add the repository URL above to HACS as a **Dashboard** custom repository.
+2. Enable beta versions for that repository and select **v0.1.0-beta.1** before
+   downloading. The manifest keeps `hide_default_branch: true`; do not substitute
+   the default branch or a different version. If the beta is not offered, stop
+   and check the error before changing the installation.
+3. Use the JavaScript module resource provided by HACS, normally
+   `/hacsfiles/advanced-blind-card/advanced-blind-card.js` with its cache query.
+   Disable the old manual `/local/` resource so only one resource loads the card,
+   then fully reload the dashboard. Keep the manual file and resource address
+   available for rollback.
+4. First check loading, expansion and the editor without moving motors. For
+   later updates, select the intended release in HACS and refresh the dashboard
+   cache. Re-downloading the same beta does not verify an update between versions.
+
+If loading fails, disable the HACS resource, restore the single manual resource,
+and reload. Do not load both copies. Actual HACS registration, prerelease selection,
+installation and updates remain unverified. See the official
+[HACS dashboard requirements](https://www.hacs.dev/docs/publish/plugin/) and
+[custom repository instructions](https://www.hacs.dev/docs/faq/custom_repositories/).
 
 ## Verification and limits
 
@@ -290,7 +310,11 @@ the same TypeScript helpers as the card. It also checks that the browser bundle
 parses and has no external runtime dependencies. No DOM emulator, TypeScript loader,
 or extra test framework is used. Node tests do not establish browser or device
 compatibility; those require separate checks.
-The bundle is written to `dist/advanced-blind-card.js`; generated files are ignored.
+The bundle is written to `dist/advanced-blind-card.js`. This single generated file
+is tracked for initial HACS repository validation; commit the freshly built bundle
+with source changes that affect it. It uses LF line endings to preserve its bytes
+across checkouts and is excluded from Biome's source checks. Other generated files
+remain ignored. A release asset must match this built file byte for byte.
 
 TypeScript checks the source, Lit supplies reactive web components, esbuild produces
 a single browser ES module with Lit included, and Biome handles linting and
