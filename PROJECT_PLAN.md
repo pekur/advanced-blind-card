@@ -120,6 +120,12 @@ Bezpečnost interakcí: žádný náhodný pohyb po tapnutí do neovládací obl
 - Kontrola kvality bundle, licence, verzování, žádný build artefakt nepotřebný pro HACS.
 - GitHub publikace až na samostatné zadání uživatele.
 
+### Fáze 5 – Návrh režimů zobrazení a kompaktnosti
+
+- Požadavek vlastníka 2026-10-26: současná karta je příliš vysoká; navrhnout více režimů zobrazení včetně kompaktního. Šest hlavních položek se sbalenými skupinami má při srovnatelné šířce zabírat přibližně výšku šesti řádků v levé části referenčního snímku, nejvýše její dvojnásobek. Výškovou interpretaci a přesné měřitelné rozměry potvrdit při návrhu.
+- Před implementací společně vybrat režimy, jejich konfiguraci a rozložení ovladačů; upřesnit chování při rozbalení, pohybu, chybách a smíšených stavech. Zachovat dostupný STOP, bezpečné dokončování interakcí, čitelnost a použitelnost dotykem i klávesnicí.
+- Nejprve samostatně schválit návrh, poté implementaci; požadavek sám neschvaluje změnu runtime, další vydání ani nasazení.
+
 ## 6. Akceptační kritéria
 
 1. Z dashboardu lze bez otevření detailu změnit výšku i náklon podporované žaluzie.
@@ -171,12 +177,12 @@ Nevytvářet automaticky `next-implementer-prompt.md`, přepisované handoff sou
 ## 9. Schválená distribuční rozhodnutí a zbývající body
 
 - Schválený veřejný název: **Advanced Blind Card**, název repozitáře `advanced-blind-card`; lokální adresář se nepřejmenovává.
-- Zvolený budoucí veřejný cíl: `https://github.com/pekur/advanced-blind-card`. Výběr cíle ani lokální commit neschvalují vytvoření repozitáře, remote operace nebo publikaci.
+- Veřejný repozitář: `https://github.com/pekur/advanced-blind-card`; vytvoření a první publikace byly samostatně schválené vlastníkem.
 - Schválená licence: **MIT**, copyright **2026 Petr Kurka**. Přibalené knihovny si zachovávají vlastní licenční oznámení v distribuovaném JS.
-- Schválená první verze pro lokální přípravu: **0.1.0-beta.1**. Veřejný GitHub repozitář, remote operace a publikace vyžadují samostatný výslovný souhlas; samotná příprava balíčku vydání neprovádí.
-- Schválené balení pro první beta-only distribuci: verzovat právě `dist/advanced-blind-card.js`, ostatní generované výstupy ignorovat. HACS 2.0.5 při prvním přidání standardně odfiltruje prerelease; tento soubor slouží pro validaci struktury repozitáře. Výstup buildu, verzovaný JS a budoucí release asset musí být totožné; zachovat LF. Manifest ponechá `hide_default_branch: true`, budoucí tag `v0.1.0-beta.1` bude prerelease a při instalaci se výslovně vybere beta verze.
-- Skutečná instalace přes HACS a minimální podporované verze HA/HACS zatím nejsou ověřené. Zbývající testovací mezery musí zůstat uvedené před rozhodnutím o veřejném vydání.
-- Vlastníkem hlášené prostředí pro plánovaný HACS test: integrace **2.0.5**, frontend **20250128065759**. Nejde o ověřené minimum podpory; skutečná registrace, instalace, aktualizace a pasivní kontrola v HA vyžadují samostatný souhlas.
+- První vydaná verze: **0.1.0-beta.1**, veřejný tag `v0.1.0-beta.1` nad commitem `45479d8`, označený jako experimentální prerelease. Text a jediný stažený JS asset byly ověřeny proti schváleným podkladům; zbývající testovací limity jsou zveřejněné v README a release notes.
+- Schválené balení: verzovat právě `dist/advanced-blind-card.js`, ostatní generované výstupy ignorovat. HACS 2.0.5 při prvním přidání standardně odfiltruje prerelease; tento soubor slouží pro validaci struktury repozitáře. Výstup buildu, verzovaný JS a příslušný release asset musí být totožné; zachovat LF. Manifest ponechává `hide_default_branch: true` a při instalaci se výslovně vybere požadovaná verze.
+- Vlastník potvrdil registraci custom repository a instalaci **v0.1.0-beta.1** přes HACS **2.0.5**, frontend **20250128065759**, jedinou HACS resource a pasivní načtení/expanzi/editor bez chyb a pozorovaného pohybu. Výchozí stažení nabídlo commit; přesnou betu bylo nutné vybrat přes jinou verzi v dialogu Stáhnout / Znovu stáhnout. Jde o uživatelské potvrzení, nikoli přímé měření HA serverového souboru.
+- Minimum podporovaných HA/HACS verzí, hash JS přímo na HA serveru, aktualizace mezi dvěma vydanými verzemi a skutečný rollback zůstávají neověřené. Ostatní reálné motorové, mobilní a přístupnostní mezery uvedené v README zůstávají otevřené; instalace stejné bety je neuzavírá.
 - Jak přesně vypadá mapování `current_tilt_position` na skutečný úhel u různých motorů; v1 použije konfigurovatelné lineární vizuální mapování.
 - Jak nejlépe zobrazit skupinové rozsahy na velmi úzkém mobilním displeji.
 - Grafický editor pokrývá globální volby; definice entit, skupin a jejich přepsání zůstává v YAML.

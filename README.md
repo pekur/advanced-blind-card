@@ -5,9 +5,10 @@ sliders, small stacked slats, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Local beta preparation: 0.1.0-beta.1.** This checkout is prepared for a future
-release; no public release or HACS installation is claimed. See
-[verification and limits](#verification-and-limits) before using it with devices.
+**Experimental beta: [0.1.0-beta.1](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.1).**
+The owner confirmed installation through HACS and passive dashboard use in the
+environment described below. See [verification and limits](#verification-and-limits)
+before using it with devices.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
 
@@ -225,9 +226,11 @@ updates never send motor commands.
 
 ## Installation and updates
 
-For a local installation, [build the card](#development), then copy
-`dist/advanced-blind-card.js` into `www/` within your Home Assistant configuration
-directory. This is a dashboard resource, not a `custom_components` integration.
+For a manual installation, download `advanced-blind-card.js` from the
+[beta release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.1)
+or [build the card](#development) from source. Copy the JS into `www/` within your
+Home Assistant configuration directory. This is a dashboard resource, not a
+`custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
@@ -240,58 +243,65 @@ resource's query suffix to the new version or build hash, then fully reload the
 dashboard (for example Ctrl+F5 on desktop). Keep one active resource for this card.
 For an unreleased rebuild, use a new hash suffix even if the version is unchanged.
 
-### HACS distribution preparation
+### HACS installation
 
-The planned public repository is `https://github.com/pekur/advanced-blind-card`.
-It has not been published by this preparation. The intended first release is
-`v0.1.0-beta.1`, marked as a prerelease, with one `advanced-blind-card.js` asset.
-Creating the public repository and release requires separate maintainer approval.
+Repository: [pekur/advanced-blind-card](https://github.com/pekur/advanced-blind-card).
+The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
+`advanced-blind-card.js` asset. Add it as a custom repository; inclusion in the
+default HACS catalog is not claimed.
 
-The owner has HACS 2.0.5 (frontend 20250128065759). In that version, beta releases
-are filtered out by default when registering a custom repository. To allow the
-initial repository validation, Git tracks exactly `dist/advanced-blind-card.js`
-as a fallback; other generated files remain ignored. See the pinned HACS 2.0.5
-[release filtering](https://github.com/hacs/integration/blob/2.0.5/custom_components/hacs/repositories/base.py)
-and [JS discovery](https://github.com/hacs/integration/blob/2.0.5/custom_components/hacs/repositories/plugin.py).
-This source-level check is not an actual HACS installation test.
+The following procedure was confirmed by the owner with HACS **2.0.5** and
+frontend **20250128065759**. In that environment the initial default download
+selected a commit. Explicitly selecting the release through the other-version
+selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 
-#### Installation after publication
+#### Installation and migration from a manual resource
 
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
-2. Enable beta versions for that repository and select **v0.1.0-beta.1** before
-   downloading. The manifest keeps `hide_default_branch: true`; do not substitute
-   the default branch or a different version. If the beta is not offered, stop
-   and check the error before changing the installation.
-3. Use the JavaScript module resource provided by HACS, normally
-   `/hacsfiles/advanced-blind-card/advanced-blind-card.js` with its cache query.
-   Disable the old manual `/local/` resource so only one resource loads the card,
-   then fully reload the dashboard. Keep the manual file and resource address
-   available for rollback.
-4. First check loading, expansion and the editor without moving motors. For
-   later updates, select the intended release in HACS and refresh the dashboard
-   cache. Re-downloading the same beta does not verify an update between versions.
+2. Open **Download**, or **Redownload** from the card's HACS menu if already
+   installed. Expand the option for a different version and explicitly select
+   **v0.1.0-beta.1**. Check that the download dialog names this tag rather than a
+   commit. If the beta is not offered, stop and check the error.
+3. When migrating from a manual installation, save its `/local/` resource URL
+   and keep the JS file for rollback. Remove only that resource registration
+   before confirming the HACS download.
+4. Confirm the download and use the **JavaScript module** resource provided by
+   HACS, normally `/hacsfiles/advanced-blind-card/advanced-blind-card.js` with its
+   cache query. Before fully reloading, verify that only one resource loads this
+   card. Check the installed version in HACS; the resource query is a cache key,
+   not a version label.
+5. Fully reload the dashboard, then check loading, expansion and the editor
+   without moving motors. For later updates, select the intended release in
+   HACS and refresh the dashboard cache. Re-downloading the same beta does not
+   verify an update between versions.
 
-If loading fails, disable the HACS resource, restore the single manual resource,
-and reload. Do not load both copies. Actual HACS registration, prerelease selection,
-installation and updates remain unverified. See the official
+If migrating from a manual installation and loading fails, disable the HACS
+resource, restore the saved manual resource, and reload. Keep only one active
+resource. This rollback procedure and updates between releases have not been
+exercised. See the official
 [HACS dashboard requirements](https://www.hacs.dev/docs/publish/plugin/) and
 [custom repository instructions](https://www.hacs.dev/docs/faq/custom_repositories/).
+The version selector is also visible in the
+[tested HACS frontend source](https://github.com/hacs/frontend/blob/20250128065759/src/components/dialogs/hacs-download-dialog.ts).
 
 ## Verification and limits
 
-| Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                               |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Individual/group motor control                                                 | Owner-operated Overkiz checks on earlier functional builds covered position, tilt, STOP, independent/shared commands and different member results.                                                                                                                          |
-| Current layout and steps                                                       | Independent code reviews and mock browser regressions; owner-operated passive HA checks covered loading/reload, expansion, both themes, editor changes, defaults, YAML key removal and save/reopen without observed movement. New steps have not been physically exercised. |
-| Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                              |
-| Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                           |
-| Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                      |
-| Distribution                                                                   | Local single-file build and packaging checks. Public release, HACS install/update and minimum supported HA/HACS versions are not established.                                                                                                                               |
+| Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Individual/group motor control                                                 | Owner-operated Overkiz checks on earlier functional builds covered position, tilt, STOP, independent/shared commands and different member results.                                                                                                                                                                                           |
+| Current layout and steps                                                       | Independent code reviews and mock browser regressions; owner-operated passive HA checks covered loading/reload, expansion, both themes, editor changes, defaults, YAML key removal and save/reopen without observed movement. New steps have not been physically exercised.                                                                  |
+| Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                                                                                               |
+| Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                                                                                            |
+| Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                                                                                       |
+| Release artifact                                                               | Published experimental prerelease. The downloaded public JS matched the reviewed build byte for byte, including complete license notices.                                                                                                                                                                                                    |
+| HACS                                                                           | Owner confirmed custom repository registration, explicit beta selection/installation, one HACS resource and passive reload/expansion/editor use without errors or observed movement on HACS 2.0.5 / frontend 20250128065759. HA server-file hash, between-release updates, actual rollback and minimum supported versions remain unverified. |
 
 The earlier owner-reported HA version was 2026.10.2; the later description
-"latest HA" does not pin an exact server or app build. The local beta has undergone
-independent prerelease review, including verification of fixes. A public release
-still requires maintainer acceptance of the remaining test gaps and explicit approval.
+"latest HA" does not pin an exact server or app build for the HACS check. The beta
+underwent independent code and packaging reviews, including verification of fixes,
+and was published with maintainer approval of the stated test gaps. Owner reports
+are observations, not a server-file hash or a trace of HA service calls. These
+checks do not establish compatibility with every motor or HA/HACS version.
 
 ## Development
 
@@ -315,6 +325,10 @@ is tracked for initial HACS repository validation; commit the freshly built bund
 with source changes that affect it. It uses LF line endings to preserve its bytes
 across checkouts and is excluded from Biome's source checks. Other generated files
 remain ignored. A release asset must match this built file byte for byte.
+HACS 2.0.5 filters prereleases by default during repository registration, so the
+tracked JS also permits initial structure validation before selecting a beta.
+See the pinned [release filtering](https://github.com/hacs/integration/blob/2.0.5/custom_components/hacs/repositories/base.py)
+and [JS discovery](https://github.com/hacs/integration/blob/2.0.5/custom_components/hacs/repositories/plugin.py).
 
 TypeScript checks the source, Lit supplies reactive web components, esbuild produces
 a single browser ES module with Lit included, and Biome handles linting and
