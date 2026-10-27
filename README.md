@@ -5,13 +5,11 @@ sliders, small stacked slats, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Experimental candidate: 0.1.0-beta.4 — not yet published.**
-This candidate adds filled inline sliders with separate HA readings and targets,
+**Experimental beta: [0.1.0-beta.4](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.4).**
+This version adds filled inline sliders with separate HA readings and targets,
 compact progress states and a user-opened detail. The default remains `detailed`.
-Beta 4 has not been installed through HACS or tested in real HA. The published
-[beta 3](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.3)
-remains available. See [verification and limits](#verification-and-limits)
-before using this candidate with devices.
+Beta 4 has not been installed through HACS or tested in real HA.
+See [verification and limits](#verification-and-limits) before using it with devices.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
 
@@ -202,7 +200,7 @@ Color is accompanied by text and symbols in the heading (waiting, movement repor
 by HA, near but unconfirmed, or a reported target). Errors, partial results and STOP
 uncertainty remain visible. Select the row heading to open the full progress detail;
 opening it cancels active slider previews without sending them. This presentation
-is not yet published or tested on real HA devices. The bars follow the native
+has not yet been tested on real HA devices. The bars follow the native
 slider direction in both left-to-right and right-to-left interfaces.
 
 ```yaml
@@ -284,11 +282,8 @@ updates never send motor commands.
 
 ## Installation and updates
 
-Beta 4 is currently a local candidate. Its release link and HACS selection below
-apply **after publication**; HACS does not offer this candidate yet.
-
-For a manual installation, [build the card](#development) from source or, after
-publication, download `advanced-blind-card.js` from the
+For a manual installation, [build the card](#development) from source or
+download `advanced-blind-card.js` from the
 [beta 4 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.4).
 Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
@@ -311,8 +306,8 @@ Repository: [pekur/advanced-blind-card](https://github.com/pekur/advanced-blind-
 The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
 `advanced-blind-card.js` asset. Add it as a custom repository; inclusion in the
 default HACS catalog is not claimed.
-Version **v0.1.0-beta.3** added responsive direct arrows. The local
-**v0.1.0-beta.4** candidate adds filled sliders and compact progress; its HACS
+Version **v0.1.0-beta.3** added responsive direct arrows. Version
+**v0.1.0-beta.4** adds filled sliders and compact progress; its HACS
 installation has not been verified.
 
 The version-selection procedure was confirmed for beta 1 with HACS **2.0.5** and
@@ -325,9 +320,9 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.4**, once published. Check that the download dialog names this tag
-   rather than a commit. The unpublished candidate will not appear here; do not
-   substitute a commit. If a published beta is not offered, check the error.
+   **v0.1.0-beta.4**. Check that the download dialog names this tag rather than a
+   commit. If this beta is not offered, check the release and any HACS error;
+   do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL
    and keep the JS file for rollback. Remove only that resource registration
    before confirming the HACS download.
@@ -356,12 +351,12 @@ The version selector is also visible in the
 
 ## Verification and limits
 
-The **0.1.0-beta.4** candidate passed check/build, 142 Node tests and
+Version **0.1.0-beta.4** passed check/build, 142 Node tests and
 257 mock-browser scenarios (20 filled sliders, 16 RTL, 20 arrows, 35 inline,
 164 regressions and two previous review regressions) in Edge. Independent review
 found one RTL presentation defect: the filled bar and target were mirrored
 relative to the native slider. It was fixed and independently verified with all
-16 RTL cases. The beta 4 candidate rebuild differs from that reviewed and committed
+16 RTL cases. The beta 4 rebuild differs from that reviewed and committed
 implementation only in its version header and includes complete license notices.
 The owner confirmed installing beta 2 through HACS, loading without errors or
 observed movement, and passive inline menu/expansion use. These are observations,
@@ -378,7 +373,7 @@ local tests and have not been tested on real motors or native mobile browsers.
 | Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                                                                                   |
 | Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                                                                                |
 | Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                                                                           |
-| Release artifact                                                               | The beta 1 and beta 3 public JS assets matched their reviewed builds byte for byte. The beta 4 local candidate has complete license notices and is checked against the reviewed filled-slider implementation; its public asset does not exist yet.                                                                               |
+| Release artifact                                                               | The beta 1 and beta 3 public JS assets matched their reviewed builds byte for byte. The beta 4 bundle has complete license notices and matches the reviewed implementation except for its version header. Compare a downloaded beta 4 asset with the SHA256 in its release notes.                                                |
 | HACS                                                                           | Owner confirmed beta 1 installation, then updating to beta 2 with one resource and passive loading/menu/expansion without errors or observed movement on HACS 2.0.5 / frontend 20250128065759. Earlier beta 1 checks included the editor. HA server-file hash, actual rollback and minimum supported versions remain unverified. |
 
 The earlier owner-reported HA version was 2026.10.2; the later description
