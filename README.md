@@ -5,14 +5,12 @@ sliders, small stacked slats, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Experimental beta: [0.1.0-beta.2](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.2).**
-This version adds the optional `layout: inline`; `detailed` remains the default.
-The owner confirmed HACS installation and passive inline loading/expansion without
-errors or observed movement. See [verification and limits](#verification-and-limits)
+**Experimental beta: [0.1.0-beta.3](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.3).**
+This version adds responsive direct arrows to `layout: inline`; `detailed` remains
+the default. Beta 3 has not been installed through HACS or tested in real HA.
+The owner confirmed beta 2 installation and passive inline use without errors or
+observed movement. See [verification and limits](#verification-and-limits)
 before using it with devices.
-
-**Unreleased local development:** the responsive direct-arrow controls described
-below are not included in the published beta 2, which uses the actions menu.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
 
@@ -190,8 +188,8 @@ are independent of the step size.
 ## Layouts
 
 The default `layout: detailed` preserves the existing tile layout. The optional
-`layout: inline` keeps both sliders, supported STOP and a small actions
-menu in one row when space permits. On narrow cards the sliders move below the
+`layout: inline` keeps both sliders, supported STOP and Open / Close controls
+in one row when space permits. On narrow cards the sliders move below the
 heading. The group arrow expands directly to members, whose layout inherits from
 the group unless explicitly overridden.
 
@@ -207,11 +205,11 @@ blinds:
   - entity: cover.office
 ```
 
-With `show_buttons: true`, the published beta 2 puts inline Open / Close commands
-in the **⋮** menu. The unreleased local variant uses stacked **↑ / ↓** buttons
+With `show_buttons: true`, inline Open / Close commands use stacked **↑ / ↓** buttons
 when the card is wider than 430 px, keeping **⋮** at 430 px or narrower. The arrows
 are 44 × 28 px with a 4 px gap, fitting the existing 60 px control area without
 increasing row height. Narrow-card menu and STOP targets remain 44 × 44 px.
+Beta 2 used the **⋮** menu at all widths; existing YAML needs no change.
 With `show_buttons: false`, both arrow and menu variants are hidden; STOP stays directly
 accessible, including while a movement response is pending. Opening/closing the
 menu or expanding a group sends no command. Opening a menu cancels active slider
@@ -225,9 +223,9 @@ Six ordinary collapsed rows measure 462 px high at 490 px wide in the local
 mock-browser fixture. Expanded members, long names, errors, motion and unresolved
 targets can increase the height. Important readings and results remain visible;
 ordinary idle gesture instructions stay available to assistive technology.
-The owner confirmed passive use of the published inline layout. The unreleased
-arrows have not undergone real HA/device testing; the evidence below distinguishes
-released versions from local verification.
+The owner confirmed passive use of the beta 2 inline layout. Beta 3 arrows have
+not undergone real HA/device testing; the evidence below distinguishes owner
+observations from local verification.
 
 ### Detailed tile layout
 
@@ -274,14 +272,14 @@ updates never send motor commands.
 ## Installation and updates
 
 For a manual installation, download `advanced-blind-card.js` from the
-[beta release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.2)
+[beta release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.3)
 or [build the card](#development) from source. Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0-beta.2
+/local/advanced-blind-card.js?v=0.1.0-beta.3
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -296,8 +294,8 @@ Repository: [pekur/advanced-blind-card](https://github.com/pekur/advanced-blind-
 The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
 `advanced-blind-card.js` asset. Add it as a custom repository; inclusion in the
 default HACS catalog is not claimed.
-Version **v0.1.0-beta.2** adds `layout` support. Its HACS installation has not yet
-been verified.
+Version **v0.1.0-beta.3** adds responsive direct arrows. Its HACS installation has
+not yet been verified.
 
 The version-selection procedure was confirmed for beta 1 with HACS **2.0.5** and
 frontend **20250128065759**. In that environment the initial default download
@@ -309,7 +307,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.2**. Check that the download dialog names this tag rather than a
+   **v0.1.0-beta.3**. Check that the download dialog names this tag rather than a
    commit. If the beta is not offered, stop and check the error.
 3. When migrating from a manual installation, save its `/local/` resource URL
    and keep the JS file for rollback. Remove only that resource registration
@@ -326,9 +324,9 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 
 If migrating from a manual installation and loading fails, disable the HACS
 resource, restore the saved manual resource, and reload. Keep only one active
-resource. This rollback procedure and updates between releases have not been
-exercised. When returning from a build with `layout` to beta 1, restore the saved
-beta 1 YAML first: remove `layout` at card, row and member level, because beta 1
+resource. A beta 1 → beta 2 update was owner-confirmed; beta 3 updates and actual
+rollback remain unverified. When returning from a build with `layout` to beta 1,
+restore the saved beta 1 YAML first: remove `layout` at card, row and member level, because beta 1
 rejects this option. Keep the existing single resource when changing HACS versions.
 See the official
 [HACS dashboard requirements](https://www.hacs.dev/docs/publish/plugin/) and
@@ -338,15 +336,17 @@ The version selector is also visible in the
 
 ## Verification and limits
 
-Version **0.1.0-beta.2** passed check/build, 138 Node tests and
-199 mock-browser scenarios (35 inline and 164 regressions) in Edge. The inline
-implementation underwent independent review; both fallback-menu findings were
-fixed and independently verified before this version-only rebuild. Independent
-distribution review confirmed the version-only change and complete license notices.
+Version **0.1.0-beta.3** passed check/build, 138 Node tests and
+221 mock-browser scenarios (20 arrows, 35 inline, 164 regressions and two review
+regressions) in Edge. Independent review found one stale-menu activation defect
+during width changes; it was fixed and independently verified with eight targeted
+checks before the version-only rebuild. The rebuild differs from the reviewed
+arrow implementation only in its version header and includes complete license
+notices.
 The owner confirmed installing beta 2 through HACS, loading without errors or
 observed movement, and passive inline menu/expansion use. These are observations,
 not a server-file hash or proof of physical command delivery. Earlier motor checks
-concern earlier builds. The unreleased responsive arrows have only local tests.
+concern earlier builds. Beta 3 responsive arrows have only local tests.
 
 | Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
