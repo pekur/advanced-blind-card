@@ -7,10 +7,12 @@ synchronizes motors.
 
 **Experimental beta: [0.1.0-beta.2](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.2).**
 This version adds the optional `layout: inline`; `detailed` remains the default.
-Beta 2 has not been installed through HACS or tested in real Home Assistant.
-The owner-reported installation and passive dashboard checks below concern beta 1
-and earlier builds. See [verification and limits](#verification-and-limits)
+The owner confirmed HACS installation and passive inline loading/expansion without
+errors or observed movement. See [verification and limits](#verification-and-limits)
 before using it with devices.
+
+**Unreleased local development:** the responsive direct-arrow controls described
+below are not included in the published beta 2, which uses the actions menu.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
 
@@ -205,11 +207,16 @@ blinds:
   - entity: cover.office
 ```
 
-With `show_buttons: true`, inline Open / Close commands are in the **⋮** menu.
-With `show_buttons: false`, that menu is hidden; supported STOP stays directly
+With `show_buttons: true`, the published beta 2 puts inline Open / Close commands
+in the **⋮** menu. The unreleased local variant uses stacked **↑ / ↓** buttons
+when the card is wider than 430 px, keeping **⋮** at 430 px or narrower. The arrows
+are 44 × 28 px with a 4 px gap, fitting the existing 60 px control area without
+increasing row height. Narrow-card menu and STOP targets remain 44 × 44 px.
+With `show_buttons: false`, both arrow and menu variants are hidden; STOP stays directly
 accessible, including while a movement response is pending. Opening/closing the
 menu or expanding a group sends no command. Opening a menu cancels active slider
-edits before focus changes. Escape closes the menu and restores focus; arrow keys
+edits before focus changes. Direct arrows discard active slider previews before
+sending their command. Escape closes the menu and restores focus; arrow keys
 navigate its actions. A fallback is included for browsers without the Popover API.
 The fallback remains subject to clipping and stacking contexts imposed by enclosing
 dashboard components.
@@ -218,8 +225,9 @@ Six ordinary collapsed rows measure 462 px high at 490 px wide in the local
 mock-browser fixture. Expanded members, long names, errors, motion and unresolved
 targets can increase the height. Important readings and results remain visible;
 ordinary idle gesture instructions stay available to assistive technology.
-The inline layout has not yet undergone real HA/device testing. Existing beta
-verification below applies to the released detailed layout.
+The owner confirmed passive use of the published inline layout. The unreleased
+arrows have not undergone real HA/device testing; the evidence below distinguishes
+released versions from local verification.
 
 ### Detailed tile layout
 
@@ -335,21 +343,25 @@ Version **0.1.0-beta.2** passed check/build, 138 Node tests and
 implementation underwent independent review; both fallback-menu findings were
 fixed and independently verified before this version-only rebuild. Independent
 distribution review confirmed the version-only change and complete license notices.
-This version has not been installed through HACS or tested with real devices.
-The owner-reported HA and HACS evidence below concerns beta 1 and earlier builds.
+The owner confirmed installing beta 2 through HACS, loading without errors or
+observed movement, and passive inline menu/expansion use. These are observations,
+not a server-file hash or proof of physical command delivery. Earlier motor checks
+concern earlier builds. The unreleased responsive arrows have only local tests.
 
-| Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                                |
-| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Individual/group motor control                                                 | Owner-operated Overkiz checks on earlier functional builds covered position, tilt, STOP, independent/shared commands and different member results.                                                                                                                                                                                           |
-| Released detailed layout and steps                                             | Independent code reviews and mock browser regressions; owner-operated passive HA checks covered loading/reload, expansion, both themes, editor changes, defaults, YAML key removal and save/reopen without observed movement. New steps have not been physically exercised.                                                                  |
-| Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                                                                                               |
-| Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                                                                                            |
-| Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                                                                                       |
-| Release artifact                                                               | The beta 1 public JS matched its reviewed build byte for byte. The beta 2 JS matches an independent local rebuild and includes complete license notices.                                                                                                                                                                                     |
-| HACS                                                                           | Owner confirmed custom repository registration, explicit beta selection/installation, one HACS resource and passive reload/expansion/editor use without errors or observed movement on HACS 2.0.5 / frontend 20250128065759. HA server-file hash, between-release updates, actual rollback and minimum supported versions remain unverified. |
+| Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Individual/group motor control                                                 | Owner-operated Overkiz checks on earlier functional builds covered position, tilt, STOP, independent/shared commands and different member results.                                                                                                                                                                               |
+| Released detailed layout and steps                                             | Independent code reviews and mock browser regressions; owner-operated passive HA checks covered loading/reload, expansion, both themes, editor changes, defaults, YAML key removal and save/reopen without observed movement. New steps have not been physically exercised.                                                      |
+| Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                                                                                   |
+| Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                                                                                |
+| Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                                                                           |
+| Release artifact                                                               | The beta 1 public JS matched its reviewed build byte for byte. The beta 2 JS matches an independent local rebuild and includes complete license notices.                                                                                                                                                                         |
+| HACS                                                                           | Owner confirmed beta 1 installation, then updating to beta 2 with one resource and passive loading/menu/expansion without errors or observed movement on HACS 2.0.5 / frontend 20250128065759. Earlier beta 1 checks included the editor. HA server-file hash, actual rollback and minimum supported versions remain unverified. |
 
 The earlier owner-reported HA version was 2026.10.2; the later description
-"latest HA" does not pin an exact server or app build for the HACS check. Beta 1
+"latest HA" did not pin an exact server or app build for the beta 1 HACS check.
+For beta 2 the owner reported Core/Supervisor 2026.10.4, OS 18.3 and HA frontend
+20260930.5, with HACS 2.0.5 / frontend 20250128065759. Beta 1
 underwent independent code and packaging reviews, including verification of fixes,
 and was published with maintainer approval of the stated test gaps. Owner reports
 are observations, not a server-file hash or a trace of HA service calls. These

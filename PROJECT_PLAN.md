@@ -126,6 +126,7 @@ Bezpečnost interakcí: žádný náhodný pohyb po tapnutí do neovládací obl
 - Před implementací společně vybrat režimy, jejich konfiguraci a rozložení ovladačů; upřesnit chování při rozbalení, pohybu, chybách a smíšených stavech. Zachovat dostupný STOP, bezpečné dokončování interakcí, čitelnost a použitelnost dotykem i klávesnicí.
 - Nejprve samostatně schválit návrh, poté implementaci; požadavek sám neschvaluje změnu runtime, další vydání ani nasazení.
 - Vlastník následně schválil lokální implementaci `layout: detailed | inline` s výchozím `detailed`, děděním karta → řádek → člen a globální volbou v editoru. Řádkový režim ponechá oba posuvníky a STOP přímo, Nahoru/Dolů v malém menu ⋮ a šipku pro přímé rozbalení členů bez velkého mezibloku. Ostatní makety Seznam/Kompaktní zatím nejsou součástí implementace. Před commitem, zveřejněním, novým vydáním nebo HA nasazením je potřeba příslušný samostatný souhlas.
+- Po pasivním ověření bety 2 vlastník schválil navazující lokální úpravu: v řádkovém režimu nad šířkou karty 430 px nahradit ⋮ přímými šipkami Nahoru/Dolů nad sebou (44 × 28 px, mezera 4 px); na užší kartě zachovat menu. Výška řádku se nesmí zvýšit, STOP zůstává samostatný. `show_buttons: false` skrývá obě varianty. Samotná lokální úprava neschvaluje commit ani další vydání/nasazení.
 
 ## 6. Akceptační kritéria
 

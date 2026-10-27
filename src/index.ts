@@ -72,6 +72,7 @@ export class AdvancedBlindCard extends LitElement {
   private menuView: View | undefined;
   private menuFocus = false;
   private topLayerMenu: HTMLElement | undefined;
+  private sizeObserver: ResizeObserver | undefined;
   private pointer:
     | {
         id: number;
@@ -190,8 +191,14 @@ export class AdvancedBlindCard extends LitElement {
     window.addEventListener("keydown", this.menuEscape, true);
     window.addEventListener("resize", this.menuMoved);
     window.addEventListener("scroll", this.menuMoved, true);
+    if (typeof ResizeObserver !== "undefined") {
+      this.sizeObserver = new ResizeObserver(this.inlineResized);
+      this.sizeObserver.observe(this);
+    }
   }
   disconnectedCallback() {
+    this.sizeObserver?.disconnect();
+    this.sizeObserver = undefined;
     window.removeEventListener("pointerup", this.releasePointer);
     window.removeEventListener("pointercancel", this.cancelPointer);
     window.removeEventListener("pointerdown", this.newPointerSequence, true);
@@ -355,7 +362,7 @@ export class AdvancedBlindCard extends LitElement {
     return keyed(
       `${view.id}-${revision}`,
       html`<section class=${`row${view.parent ? " child" : ""}${inline ? " inline" : ""}`} data-row=${view.id} data-layout=${view.settings.layout} aria-label=${this.nameFor(view)}>
-      ${inline ? html`<div class="inline-grid"><div class="heading">${heading}</div>${sliders}<div class="inline-actions">${view.settings.showButtons ? this.menuButton(view) : nothing}${this.stopButton(view)}${expand}</div></div>` : html`<div class="heading">${heading}${expand}</div>`}
+      ${inline ? html`<div class="inline-grid"><div class="heading">${heading}</div>${sliders}<div class="inline-actions">${view.settings.showButtons ? html`<div class="inline-arrows">${this.button(view, "open", this.t("open"), "↑", false, true)}${this.button(view, "close", this.t("close"), "↓", false, true)}</div>${this.menuButton(view)}` : nothing}${this.stopButton(view)}${expand}</div></div>` : html`<div class="heading">${heading}${expand}</div>`}
       ${this.movement(view)}
       ${inline ? nothing : sliders}
       ${this.controlDetails(view)}
@@ -407,10 +414,7 @@ export class AdvancedBlindCard extends LitElement {
       }
       this.topLayerMenu = undefined;
     }
-    if (focus && this.isConnected && !document.hidden)
-      this.shadowRoot
-        ?.getElementById(`${view.id}-menu-toggle`)
-        ?.focus({ preventScroll: true });
+    if (focus) this.focusInlineAction(view.id);
     this.requestUpdate();
   }
   private dismissMenu = (event: PointerEvent) => {
@@ -436,6 +440,28 @@ export class AdvancedBlindCard extends LitElement {
   private menuMoved = () => {
     this.positionMenu();
   };
+  private focusInlineAction(id: string) {
+    if (!this.isConnected || document.hidden || !document.hasFocus()) return;
+    const buttons = this.shadowRoot
+      ?.querySelector(`[data-row="${id}"]`)
+      ?.querySelectorAll<HTMLButtonElement>(
+        ":scope > .inline-grid .inline-actions button",
+      );
+    [...(buttons ?? [])]
+      .find((button) => !button.disabled && button.getClientRects().length)
+      ?.focus({ preventScroll: true });
+  }
+  private inlineResized = () => {
+    const focused = this.shadowRoot?.activeElement as HTMLElement | null;
+    if (
+      focused?.matches(".inline-arrow, .menu-toggle") &&
+      !focused.getClientRects().length
+    ) {
+      const id = focused.closest<HTMLElement>("[data-row]")?.dataset.row;
+      if (id) this.focusInlineAction(id);
+    }
+    this.positionMenu();
+  };
   protected updated() {
     this.positionMenu();
   }
@@ -446,6 +472,10 @@ export class AdvancedBlindCard extends LitElement {
     const menu = this.shadowRoot?.getElementById("action-menu");
     if (!trigger || !menu || (view.parent && !view.parent.expanded)) {
       this.closeMenu();
+      return;
+    }
+    if (!trigger.getClientRects().length) {
+      this.closeMenu(true);
       return;
     }
     if (menu.hasAttribute("popover") && this.topLayerMenu !== menu) {
@@ -526,10 +556,17 @@ export class AdvancedBlindCard extends LitElement {
       aria-label=${`${this.t("moreActions")} — ${this.nameFor(view)}`} aria-haspopup="menu"
       aria-expanded=${String(this.menuView === view)} aria-controls=${this.menuView === view ? "action-menu" : nothing}
       @pointerdown=${(event: PointerEvent) => {
-        if (this.current(view, generation, revision, event))
+        if (
+          this.current(view, generation, revision, event) &&
+          (event.currentTarget as HTMLElement).getClientRects().length
+        )
           this.prepareMenu(view);
       }} @click=${(event: MouseEvent) => {
-        if (!this.current(view, generation, revision, event)) return;
+        if (
+          !this.current(view, generation, revision, event) ||
+          !(event.currentTarget as HTMLElement).getClientRects().length
+        )
+          return;
         this.prepareMenu(view);
         if (this.menuView === view) this.closeMenu(true);
         else {
@@ -1001,16 +1038,38 @@ export class AdvancedBlindCard extends LitElement {
     label: string,
     symbol: string,
     inMenu = false,
+    compact = false,
   ) {
     const generation = this.generation,
       revision = view.controller.revision;
     const reason = view.controller.reason(action, this.hass?.language);
     const group =
       view.controller instanceof GroupController ? view.controller : undefined;
-    return html`<button type="button" role=${inMenu ? "menuitem" : nothing} aria-label=${this.views.length === 1 && !group && !view.parent ? label : `${this.nameFor(view)} ${label}`}
+    return html`<button type="button" class=${compact ? "inline-arrow" : nothing} data-action=${compact ? action : nothing} role=${inMenu ? "menuitem" : nothing} aria-label=${this.views.length === 1 && !group && !view.parent ? label : `${this.nameFor(view)} ${label}`}
       ?disabled=${reason !== null} title=${reason ?? (group ? group.coverage(action, this.hass?.language) : label)} aria-description=${reason ?? (group ? group.coverage(action, this.hass?.language) : "")}
+      @pointerdown=${
+        compact
+          ? (event: PointerEvent) => {
+              if (
+                this.current(view, generation, revision, event) &&
+                (event.currentTarget as HTMLElement).getClientRects().length
+              )
+                this.prepareMenu(view);
+            }
+          : nothing
+      }
       @click=${(event: MouseEvent) => {
-        if (this.current(view, generation, revision, event)) {
+        if (
+          this.current(view, generation, revision, event) &&
+          ((!compact && !inMenu) ||
+            (event.currentTarget as HTMLElement).getClientRects().length) &&
+          (!inMenu ||
+            (this.menuView === view &&
+              this.shadowRoot
+                ?.getElementById(`${view.id}-menu-toggle`)
+                ?.getClientRects().length))
+        ) {
+          if (compact) this.prepareMenu(view);
           this.prepare(view);
           void view.controller.perform(action);
           if (inMenu) this.closeMenu(true);
@@ -1125,7 +1184,10 @@ export class AdvancedBlindCard extends LitElement {
     .inline-actions { display:flex; gap:6px; align-items:center; }
     .inline-actions button { flex:none; width:44px; min-width:44px; min-height:44px; padding:0; margin:0; border:0;
       background:var(--secondary-background-color, #f5f7f9); }
-    .inline-actions .menu-toggle { font-size:22px; }
+    .inline-actions .menu-toggle { display:none; font-size:22px; }
+    .inline-arrows { display:grid; gap:4px; height:60px; }
+    .inline-actions .inline-arrow { height:28px; min-height:28px; font-size:18px; }
+    .inline-arrow > span:not(.button-symbol) { display:none; }
     .inline-actions .stop { color:inherit; font-size:11px; }
     .inline-actions .stop .button-symbol { display:none; }
     .inline > .members:not(:empty) { gap:6px; margin:6px 0 0 8px; padding-left:8px; border-left:1px solid var(--divider-color, #ddd); }
@@ -1136,6 +1198,8 @@ export class AdvancedBlindCard extends LitElement {
     .action-menu button { display:flex; width:100%; min-height:44px; gap:8px; padding:8px; border:0; text-align:start; align-items:center;
       background:var(--secondary-background-color, #f5f7f9); font-size:14px; }
     @container blind-card (max-width:430px) {
+      .inline-arrows { display:none; }
+      .inline-actions .menu-toggle { display:block; }
       .inline-grid { grid-template-columns:minmax(0,1fr) auto; row-gap:0; }
       .inline-grid .heading { grid-column:1; grid-row:1; }
       .inline-grid .inline-actions { grid-column:2; grid-row:1; }
