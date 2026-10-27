@@ -5,14 +5,12 @@ sliders, small stacked slats, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Experimental beta: [0.1.0-beta.1](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.1).**
-The owner confirmed installation through HACS and passive dashboard use in the
-environment described below. See [verification and limits](#verification-and-limits)
+**Experimental beta: [0.1.0-beta.2](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.2).**
+This version adds the optional `layout: inline`; `detailed` remains the default.
+Beta 2 has not been installed through HACS or tested in real Home Assistant.
+The owner-reported installation and passive dashboard checks below concern beta 1
+and earlier builds. See [verification and limits](#verification-and-limits)
 before using it with devices.
-
-**Local prerelease candidate: 0.1.0-beta.2.** This checkout includes the optional
-`layout: inline` below. The candidate is not published and has not been tested in
-real Home Assistant. The published beta 1 does not support `layout`.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
 
@@ -189,8 +187,8 @@ are independent of the step size.
 
 ## Layouts
 
-The default `layout: detailed` preserves the existing tile layout. The optional,
-unreleased `layout: inline` keeps both sliders, supported STOP and a small actions
+The default `layout: detailed` preserves the existing tile layout. The optional
+`layout: inline` keeps both sliders, supported STOP and a small actions
 menu in one row when space permits. On narrow cards the sliders move below the
 heading. The group arrow expands directly to members, whose layout inherits from
 the group unless explicitly overridden.
@@ -268,16 +266,14 @@ updates never send motor commands.
 ## Installation and updates
 
 For a manual installation, download `advanced-blind-card.js` from the
-[published beta 1 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.1)
+[beta release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.2)
 or [build the card](#development) from source. Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
-The example below is for beta 1; for a local candidate build, use that build's
-version or hash as the cache suffix.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0-beta.1
+/local/advanced-blind-card.js?v=0.1.0-beta.2
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -292,8 +288,10 @@ Repository: [pekur/advanced-blind-card](https://github.com/pekur/advanced-blind-
 The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
 `advanced-blind-card.js` asset. Add it as a custom repository; inclusion in the
 default HACS catalog is not claimed.
+Version **v0.1.0-beta.2** adds `layout` support. Its HACS installation has not yet
+been verified.
 
-The following procedure was confirmed by the owner with HACS **2.0.5** and
+The version-selection procedure was confirmed for beta 1 with HACS **2.0.5** and
 frontend **20250128065759**. In that environment the initial default download
 selected a commit. Explicitly selecting the release through the other-version
 selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
@@ -303,7 +301,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.1**. Check that the download dialog names this tag rather than a
+   **v0.1.0-beta.2**. Check that the download dialog names this tag rather than a
    commit. If the beta is not offered, stop and check the error.
 3. When migrating from a manual installation, save its `/local/` resource URL
    and keep the JS file for rollback. Remove only that resource registration
@@ -332,11 +330,12 @@ The version selector is also visible in the
 
 ## Verification and limits
 
-The local **0.1.0-beta.2 candidate** passed check/build, 138 Node tests and
+Version **0.1.0-beta.2** passed check/build, 138 Node tests and
 199 mock-browser scenarios (35 inline and 164 regressions) in Edge. The inline
 implementation underwent independent review; both fallback-menu findings were
-fixed and independently verified before this version-only rebuild. The candidate
-has not been published, installed through HACS or tested with real devices.
+fixed and independently verified before this version-only rebuild. Independent
+distribution review confirmed the version-only change and complete license notices.
+This version has not been installed through HACS or tested with real devices.
 The owner-reported HA and HACS evidence below concerns beta 1 and earlier builds.
 
 | Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                                |
@@ -346,11 +345,11 @@ The owner-reported HA and HACS evidence below concerns beta 1 and earlier builds
 | Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                                                                                               |
 | Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                                                                                            |
 | Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                                                                                       |
-| Release artifact                                                               | Published experimental prerelease. The downloaded public JS matched the reviewed build byte for byte, including complete license notices.                                                                                                                                                                                                    |
+| Release artifact                                                               | The beta 1 public JS matched its reviewed build byte for byte. The beta 2 JS matches an independent local rebuild and includes complete license notices.                                                                                                                                                                                     |
 | HACS                                                                           | Owner confirmed custom repository registration, explicit beta selection/installation, one HACS resource and passive reload/expansion/editor use without errors or observed movement on HACS 2.0.5 / frontend 20250128065759. HA server-file hash, between-release updates, actual rollback and minimum supported versions remain unverified. |
 
 The earlier owner-reported HA version was 2026.10.2; the later description
-"latest HA" does not pin an exact server or app build for the HACS check. The beta
+"latest HA" does not pin an exact server or app build for the HACS check. Beta 1
 underwent independent code and packaging reviews, including verification of fixes,
 and was published with maintainer approval of the stated test gaps. Owner reports
 are observations, not a server-file hash or a trace of HA service calls. These
