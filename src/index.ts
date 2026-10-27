@@ -27,6 +27,7 @@ import {
   type TiltVisual,
   tiltRotation,
 } from "./model.ts";
+import { barPresentation, compactProgress } from "./presentation.ts";
 import {
   type ProgressStatus,
   progressLabels,
@@ -45,6 +46,7 @@ interface View {
   expandable: boolean;
   expanded: boolean;
   inputRevision: number;
+  detailsOpen?: boolean;
 }
 const sliderKeys = new Set([
   "ArrowLeft",
@@ -335,6 +337,10 @@ export class AdvancedBlindCard extends LitElement {
     const group =
       controller instanceof GroupController ? controller : undefined;
     const revision = controller.revision;
+    const generation = this.generation;
+    const hasProgress = (["position", "tilt"] as const).some(
+      (axis) => this.axisStatuses(view, axis).length > 0,
+    );
     const entity =
       controller instanceof CoverController
         ? entityFor(controller.snapshot)
@@ -350,34 +356,49 @@ export class AdvancedBlindCard extends LitElement {
     const heading = html`<span class="icon" aria-hidden="true">▤</span><div class="heading-text">
         ${view.settings.showName ? html`<h2>${this.nameFor(view)}</h2>` : nothing}
         <div class="metadata">
-        ${view.settings.showState || !this.healthyIdle(view) ? html`<p class="state entity-state" role="status">${state}</p>` : nothing}
+        ${(view.settings.showState && !(inline && hasProgress && this.healthyIdle(view))) || !this.healthyIdle(view) ? html`<p class="state entity-state" role="status">${state}</p>` : nothing}
         ${group && (!inline || (!view.settings.showState && this.healthyIdle(view))) ? html`<p class="state">${this.t("covers", { count: view.members.length })}</p>` : nothing}
         </div>
+        ${inline ? this.compactStatus(view) : nothing}
       </div>`;
+    const inlineHeading = html`<div class="heading">${heading}<button class="heading-details" type="button" aria-expanded=${String(!!view.detailsOpen)} aria-controls=${`${view.id}-details`} aria-label=${`${this.nameFor(view)} · ${this.t("progressDetails")}`}
+      @pointerdown=${(event: PointerEvent) => {
+        if (this.current(view, generation, revision, event))
+          this.prepareMenu(view);
+      }} @click=${(event: MouseEvent) => {
+        if (!this.current(view, generation, revision, event)) return;
+        this.prepareMenu(view);
+        view.detailsOpen = !view.detailsOpen;
+        this.requestUpdate();
+      }}><span class="detail-cue" aria-hidden="true">${view.detailsOpen ? "⌄" : "›"}</span></button></div>`;
     const expand = group && view.expandable ? this.expandButton(view) : nothing;
     const sliders = keyed(
       view.inputRevision,
       html`<div class="sliders">${this.slider(view, "position", this.t("position"))}${this.slider(view, "tilt", this.t("tilt"))}</div>`,
     );
+    const transport = group?.results.length
+      ? html`<details class="transport"><summary>${this.t("responses")}</summary><p class="state">${this.t("result", { accepted: group.results.filter((r) => r.status === "accepted").length, failed: group.results.filter((r) => r.status === "failed").length, skipped: group.results.filter((r) => r.status === "skipped").length })}</p></details>`
+      : nothing;
+    const details = html`${this.movement(view)}
+      ${inline ? nothing : sliders}
+      ${this.controlDetails(view)}
+      ${(["position", "tilt"] as const).map((axis) => html`<div id=${`${this.axisId(view, axis)}-progress`} class="progress" data-progress-axis=${axis}>${this.axisProgress(view, axis, this.report(view, axis))}</div>`)}`;
     return keyed(
       `${view.id}-${revision}`,
       html`<section class=${`row${view.parent ? " child" : ""}${inline ? " inline" : ""}`} data-row=${view.id} data-layout=${view.settings.layout} aria-label=${this.nameFor(view)}>
-      ${inline ? html`<div class="inline-grid"><div class="heading">${heading}</div>${sliders}<div class="inline-actions">${view.settings.showButtons ? html`<div class="inline-arrows">${this.button(view, "open", this.t("open"), "↑", false, true)}${this.button(view, "close", this.t("close"), "↓", false, true)}</div>${this.menuButton(view)}` : nothing}${this.stopButton(view)}${expand}</div></div>` : html`<div class="heading">${heading}${expand}</div>`}
-      ${this.movement(view)}
-      ${inline ? nothing : sliders}
-      ${this.controlDetails(view)}
-      ${(["position", "tilt"] as const).map((axis) => html`<div id=${`${this.axisId(view, axis)}-progress`} class="progress" data-progress-axis=${axis}>${this.axisProgress(view, axis, this.report(view, axis))}</div>`)}
+      ${inline ? html`<div class="inline-grid">${inlineHeading}${sliders}<div class="inline-actions">${view.settings.showButtons ? html`<div class="inline-arrows">${this.button(view, "open", this.t("open"), "↑", false, true)}${this.button(view, "close", this.t("close"), "↓", false, true)}</div>${this.menuButton(view)}` : nothing}${this.stopButton(view)}${expand}</div></div>` : html`<div class="heading">${heading}${expand}</div>`}
+      ${inline ? html`<div id=${`${view.id}-details`} ?hidden=${!view.detailsOpen}>${details}${transport}</div>` : details}
       ${
         inline
           ? nothing
           : html`<div class="buttons">${view.settings.showButtons ? this.button(view, "open", this.t("open"), "↑") : nothing}
         ${this.stopButton(view)}${view.settings.showButtons ? this.button(view, "close", this.t("close"), "↓") : nothing}</div>`
       }
-      ${controller.pending ? html`<p class="pending" role="status">${this.t("sending")}</p>` : nothing}
+      ${controller.pending && !inline ? html`<p class="pending" role="status">${this.t("sending")}</p>` : nothing}
       ${controller.error ? html`<p class="error" role="alert">${controller.errorText(this.hass?.language)}</p>` : nothing}
       ${group && !view.expanded ? view.members.filter((member) => member.controller.error).map((member) => html`<p class="error" role="alert">${this.nameFor(member)}: ${member.controller.errorText(this.hass?.language)}</p>`) : nothing}
       ${this.stopProgress(view)}
-      ${group?.results.length ? html`<details class="transport"><summary>${this.t("responses")}</summary><p class="state">${this.t("result", { accepted: group.results.filter((r) => r.status === "accepted").length, failed: group.results.filter((r) => r.status === "failed").length, skipped: group.results.filter((r) => r.status === "skipped").length })}</p></details>` : nothing}
+      ${inline ? nothing : transport}
       ${group && view.expandable ? html`<div class="members" id=${`${view.id}-members`}>${view.expanded ? view.members.map((member) => this.row(member)) : nothing}</div>` : nothing}
     </section>`,
     );
@@ -645,6 +666,83 @@ export class AdvancedBlindCard extends LitElement {
         )
       : view.settings.tiltVisual;
   }
+  private axisStatuses(view: View, axis: Axis): ProgressStatus[] {
+    const controller = view.controller;
+    if (controller instanceof CoverController) {
+      const status = controller.progress.status(axis);
+      return status ? [status] : [];
+    }
+    return [
+      ...(controller
+        .progressFor(axis)
+        ?.members.map((member) => member.status) ?? []),
+      ...controller.individualProgressFor(axis).map((member) => member.status),
+    ];
+  }
+  private compactStatus(view: View) {
+    const controller = view.controller;
+    const activeAxes = (["position", "tilt"] as const).filter(
+      (axis) =>
+        this.axisStatuses(view, axis).length > 0 ||
+        controller.reason(axis, this.hass?.language),
+    );
+    return html`<span class="compact-status">
+      ${(["position", "tilt"] as const).map((axis) => {
+        const groupGoal =
+          controller instanceof GroupController
+            ? controller.progressFor(axis)
+            : undefined;
+        const statuses =
+          controller instanceof GroupController
+            ? (groupGoal?.members.map((member) => member.status) ?? [])
+            : this.axisStatuses(view, axis);
+        const counts = new Map<string, number>();
+        for (const status of statuses) {
+          const label = `${progressSymbol(status)} ${compactProgress(status, this.hass?.language)}`;
+          counts.set(label, (counts.get(label) ?? 0) + 1);
+        }
+        const reason = controller.reason(axis, this.hass?.language);
+        const extra =
+          controller instanceof GroupController &&
+          this.report(view, axis) !== this.report(view, axis, true)
+            ? this.report(view, axis)
+            : "";
+        const individual =
+          controller instanceof GroupController
+            ? controller.individualProgressFor(axis)
+            : [];
+        const targets = individual
+          .map((member) => {
+            const child = view.members.find(
+              (child) =>
+                child.controller instanceof CoverController &&
+                child.controller.config?.entity === member.entity,
+            );
+            return `${child ? this.nameFor(child) : member.entity}: ${progressSymbol(member.status)} ${compactProgress(member.status, this.hass?.language)} · ${member.status.historical ? this.t("earlierTarget") : this.t("target")} ${member.status.target}%`;
+          })
+          .join(" · ");
+        const messages = [
+          reason,
+          extra,
+          groupGoal?.target !== undefined &&
+          statuses.some((status) =>
+            ["skipped", "replaced"].includes(status.code),
+          )
+            ? `${progressLabels(this.hass?.language).groupTarget}: ${groupGoal.target}%`
+            : "",
+          ...[...counts].map(
+            ([label, count]) =>
+              `${statuses.length > 1 ? `${count}/${statuses.length} ` : ""}${label}`,
+          ),
+          targets,
+        ].filter(Boolean);
+        return messages.length
+          ? html`<span class="compact-axis" role="status" aria-live="polite"><span class=${activeAxes.length === 1 ? "sr-only" : nothing}>${this.t(axis === "position" ? "position" : "shortTilt")}: </span>${messages.join(" · ")}</span>`
+          : nothing;
+      })}
+      ${!this.visualFor(view) ? html`<span class="compact-axis">? ${this.t("differentMaps")}</span>` : nothing}
+    </span>`;
+  }
   private controlDetails(view: View) {
     const controller = view.controller;
     const group =
@@ -751,9 +849,8 @@ export class AdvancedBlindCard extends LitElement {
       this.current(view, generation, revision, event) &&
       inputRevision === view.inputRevision &&
       (event.currentTarget as HTMLElement).isConnected;
-    return html`<section class="slider" aria-label=${label}>
-      <div class="slider-label"><label for=${id}>${visibleLabel}${group ? html`<span class=${`target-label${view.settings.layout === "inline" ? " sr-only" : ""}`}>${this.t("target")}</span>` : nothing}</label><div class="slider-values">${axis === "tilt" ? this.slats(group && !chosen ? reported : value, visual ?? defaultTiltVisual, mapReason) : nothing}${revealValues ? html`<output aria-live="off" for=${id}>${displayValue}</output>` : nothing}</div></div>
-      <input id=${id} type="range" min="0" max="100" step=${step} class=${!chosen && reported === null ? "unknown" : nothing}
+    const inline = view.settings.layout === "inline";
+    const input = html`<input id=${id} type="range" min="0" max="100" step=${step} class=${!chosen && reported === null ? "unknown" : nothing}
         .value=${untouchedKeyboard ? noChange : live(String(value ?? 0))} ?disabled=${reason !== null}
         aria-label=${this.views.length === 1 && !group && !view.parent ? label : `${this.nameFor(view)} ${group ? this.t("targetAxis", { axis: label }) : label}`}
         aria-valuetext=${group || chosen ? `${chosen ? `${this.t("target")} ${this.t("percent", { value: value ?? 0 })}${draft ? ` ${this.t("preview")}` : ""}` : this.t("noTarget")}. ${this.t("reported")}: ${report}` : value === null ? this.t("unknown") : this.t("percent", { value })}
@@ -853,7 +950,39 @@ export class AdvancedBlindCard extends LitElement {
             if (!document.hasFocus()) this.cancelInteraction();
             else void controller.finish(axis, "keyboard");
           }
-        }} />
+        }} />`;
+    const members = group ? group.members : [controller as CoverController];
+    const values = members.map((member) => {
+      const entity = entityFor(member.snapshot);
+      return member.hass?.connected &&
+        entity &&
+        ["open", "closed", "opening", "closing"].includes(entity.state)
+        ? member.reported(axis)
+        : null;
+    });
+    const bar = barPresentation(
+      values,
+      this.axisStatuses(view, axis),
+      draft ? (value ?? undefined) : undefined,
+    );
+    const targetPosition =
+      bar.target === undefined ? 0 : Math.min(100, Math.max(0, bar.target));
+    return html`<section class="slider" aria-label=${label}>
+      <div class="slider-label"><label for=${id}>${visibleLabel}${group ? html`<span class=${`target-label${inline ? " sr-only" : ""}`}>${this.t("target")}</span>` : nothing}</label><div class="slider-values">${axis === "tilt" ? this.slats(inline || (group && !chosen) ? reported : value, visual ?? defaultTiltVisual, mapReason) : nothing}${revealValues ? html`<output aria-live="off" for=${id} title=${inline ? `${this.t("reported")}: ${report}` : nothing}>${inline ? this.report(view, axis, true) : displayValue}</output>` : nothing}</div></div>
+      ${
+        inline
+          ? html`<div class="range-control" data-tone=${bar.tone} data-uncertain=${String(bar.uncertain)}>
+        <div class="range-track" aria-hidden="true">
+          <span class="range-fill" style=${`width:${bar.min}%`}></span>
+          <span class="range-mixed" style=${`inset-inline-start:${bar.min}%;width:${bar.max - bar.min}%`}></span>
+          ${values.some((value) => value !== null) && bar.min === bar.max ? html`<span class="range-report" style=${`inset-inline-start:clamp(0px, calc(${bar.min}% - 2px), calc(100% - 4px))`}></span>` : nothing}
+          ${bar.target !== undefined ? html`<span class="range-route" style=${`inset-inline-start:${Math.min(bar.min, targetPosition)}%;width:${Math.max(bar.max, targetPosition) - Math.min(bar.min, targetPosition)}%`}></span><span class="range-target" style=${`inset-inline-start:clamp(0px, calc(${targetPosition}% - 1px), calc(100% - 2px))`}></span>` : nothing}
+        </div>
+        ${input}
+        ${bar.target !== undefined ? html`<span class="target-chip" style=${`inset-inline-start:clamp(0px, calc(${targetPosition}% - 23px), calc(100% - 46px))`} aria-hidden="true">${draft ? "◇" : "→"} ${bar.target}%</span>` : nothing}
+      </div>`
+          : input
+      }
     </section>`;
   }
   private axisProgress(view: View, axis: Axis, report: string) {
@@ -1169,7 +1298,13 @@ export class AdvancedBlindCard extends LitElement {
     .row.inline { padding:5px; }
     ha-card > .row.inline + .row.inline { margin-top:6px; }
     .inline-grid { display:grid; grid-template-columns:minmax(100px, 1.2fr) minmax(0, 2fr) auto; gap:6px; align-items:center; }
-    .inline-grid .heading { margin:0; gap:0; min-width:0; }
+    .inline-grid .heading { position:relative; margin:0; gap:0; min-width:0; }
+    .inline-grid .heading-details { position:absolute; inset:0; display:flex; justify-content:flex-end; align-items:center; padding:0; border:0; border-radius:4px; background:transparent; text-align:start; width:calc(100% + 4px); }
+    .inline-grid .heading-details:hover { background:transparent; }
+    .detail-cue { position:absolute; right:0; width:4px; font-size:12px; color:var(--secondary-text-color, #666); }
+    .compact-status { display:block; font-size:11px; line-height:14px; overflow-wrap:anywhere; }
+    .compact-axis { display:block; }
+    [hidden] { display:none !important; }
     .inline-grid .icon { display:none; }
     .inline-grid h2 { font-size:14px; line-height:18px; }
     .inline-grid .metadata { display:block; }
@@ -1181,6 +1316,26 @@ export class AdvancedBlindCard extends LitElement {
     .inline-grid .slider-values { gap:3px; }
     .inline-grid output { font-size:11px; line-height:16px; }
     .inline-grid .slats { width:15px; height:16px; }
+    .range-control { position:relative; height:44px; min-width:0; --range-color:var(--primary-color, #03a9f4); }
+    .range-control[data-tone="caution"] { --range-color:var(--warning-color, #a56800); }
+    .range-control[data-tone="error"] { --range-color:var(--error-color, #db4437); }
+    .range-control[data-tone="reached"] { --range-color:var(--success-color, #238636); }
+    .range-track { position:absolute; inset:8px 0; border-radius:9px; overflow:hidden; background:var(--secondary-background-color, #e5e7eb); box-shadow:inset 0 0 0 1px var(--divider-color, #ccc); pointer-events:none; }
+    .range-fill, .range-mixed, .range-route { position:absolute; top:0; bottom:0; pointer-events:none; }
+    .range-fill { inset-inline-start:0; background:var(--range-color); opacity:.75; }
+    .range-mixed { background:repeating-linear-gradient(120deg, var(--range-color) 0 2px, transparent 2px 5px); opacity:.75; }
+    .range-route { background:repeating-linear-gradient(120deg, var(--range-color) 0 1px, transparent 1px 6px); opacity:.4; }
+    .range-target { position:absolute; top:2px; bottom:2px; width:2px; background:#fff; box-shadow:0 0 0 1px #333; }
+    .range-report { position:absolute; top:0; bottom:0; width:4px; background:#fff; box-shadow:0 0 0 1px #333; border-radius:2px; }
+    .range-control[data-uncertain="true"] .range-track { background:repeating-linear-gradient(120deg, var(--secondary-background-color, #e5e7eb) 0 4px, var(--divider-color, #ccc) 4px 5px); }
+    .range-control input { position:relative; z-index:4; appearance:none; -webkit-appearance:none; background:transparent; border:0; border-radius:9px; }
+    .range-control input::-webkit-slider-runnable-track { height:28px; background:transparent; border:0; }
+    .range-control input::-webkit-slider-thumb { appearance:none; -webkit-appearance:none; height:28px; width:4px; border:0; border-radius:2px; background:var(--primary-text-color, #212121); }
+    .range-control input::-moz-range-track { height:28px; background:transparent; border:0; }
+    .range-control input::-moz-range-thumb { height:28px; width:4px; border:0; border-radius:2px; background:var(--primary-text-color, #212121); }
+    .range-control input:not(:focus):not(:active)::-webkit-slider-thumb { visibility:hidden; }
+    .range-control input:not(:focus):not(:active)::-moz-range-thumb { visibility:hidden; }
+    .target-chip { position:absolute; z-index:5; top:12px; width:46px; max-width:100%; box-sizing:border-box; text-align:center; padding:0 2px; border-radius:4px; background:var(--ha-card-background, #fff); color:var(--primary-text-color, #212121); font-size:10px; font-weight:600; line-height:20px; pointer-events:none; white-space:nowrap; }
     .inline-actions { display:flex; gap:6px; align-items:center; }
     .inline-actions button { flex:none; width:44px; min-width:44px; min-height:44px; padding:0; margin:0; border:0;
       background:var(--secondary-background-color, #f5f7f9); }

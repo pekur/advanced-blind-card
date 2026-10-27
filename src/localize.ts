@@ -1,4 +1,6 @@
 const en = {
+  progressDetails: "Progress details (reported values and targets)",
+  earlierTarget: "Earlier target",
   layout: "Layout",
   detailed: "Detailed",
   inline: "Inline / row",
@@ -113,6 +115,8 @@ const en = {
 } as const;
 
 const cs: Record<keyof typeof en, string> = {
+  progressDetails: "Podrobnosti průběhu (hlášené hodnoty a cíle)",
+  earlierTarget: "Dřívější cíl",
   layout: "Rozložení",
   detailed: "Podrobné",
   inline: "Řádkové",

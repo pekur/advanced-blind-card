@@ -9,6 +9,7 @@
 - After implementation, run relevant checks and evaluate whether independent review is appropriate.
 - Recommend independent review after Phase 1, grouped-cover implementation, configuration API changes, and before release. Obtain explicit approval before launching any review.
 - At each phase end, report completed work, actual verification results, remaining issues, and the recommended next action; end with an explicit approval question and wait.
+- With every approval request, state the recommended model and reasoning effort, with a brief reason. A recommendation does not itself change session settings.
 - Never advance phases, commit, publish, deploy, or perform Git remote operations without explicit approval.
 
 ## Independent review

@@ -193,6 +193,16 @@ in one row when space permits. On narrow cards the sliders move below the
 heading. The group arrow expands directly to members, whose layout inherits from
 the group unless explicitly overridden.
 
+The local development build uses filled inline sliders: the value above each bar
+and its solid fill are HA reports, never an animated estimate. Hatched ranges show
+different member readings. A separate white tick and arrow badge mark the target;
+the diamond badge marks an unsent preview. Step settings do not round HA reports.
+Color is accompanied by text and symbols in the heading (waiting, movement reported
+by HA, near but unconfirmed, or a reported target). Errors, partial results and STOP
+uncertainty remain visible. Select the row heading to open the full progress detail;
+opening it cancels active slider previews without sending them. This presentation
+is not yet published or tested on real HA devices.
+
 ```yaml
 type: custom:advanced-blind-card
 layout: inline
