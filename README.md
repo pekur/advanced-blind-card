@@ -10,8 +10,9 @@ The owner confirmed installation through HACS and passive dashboard use in the
 environment described below. See [verification and limits](#verification-and-limits)
 before using it with devices.
 
-**Unreleased local development:** `layout: inline` below is not included in the
-published beta. It requires a build from this checkout.
+**Local prerelease candidate: 0.1.0-beta.2.** This checkout includes the optional
+`layout: inline` below. The candidate is not published and has not been tested in
+real Home Assistant. The published beta 1 does not support `layout`.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
 
@@ -267,10 +268,12 @@ updates never send motor commands.
 ## Installation and updates
 
 For a manual installation, download `advanced-blind-card.js` from the
-[beta release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.1)
+[published beta 1 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.1)
 or [build the card](#development) from source. Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
+The example below is for beta 1; for a local candidate build, use that build's
+version or hash as the cache suffix.
 Register one **JavaScript module** dashboard resource:
 
 ```text
@@ -318,7 +321,10 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 If migrating from a manual installation and loading fails, disable the HACS
 resource, restore the saved manual resource, and reload. Keep only one active
 resource. This rollback procedure and updates between releases have not been
-exercised. See the official
+exercised. When returning from a build with `layout` to beta 1, restore the saved
+beta 1 YAML first: remove `layout` at card, row and member level, because beta 1
+rejects this option. Keep the existing single resource when changing HACS versions.
+See the official
 [HACS dashboard requirements](https://www.hacs.dev/docs/publish/plugin/) and
 [custom repository instructions](https://www.hacs.dev/docs/faq/custom_repositories/).
 The version selector is also visible in the
@@ -326,10 +332,17 @@ The version selector is also visible in the
 
 ## Verification and limits
 
+The local **0.1.0-beta.2 candidate** passed check/build, 138 Node tests and
+199 mock-browser scenarios (35 inline and 164 regressions) in Edge. The inline
+implementation underwent independent review; both fallback-menu findings were
+fixed and independently verified before this version-only rebuild. The candidate
+has not been published, installed through HACS or tested with real devices.
+The owner-reported HA and HACS evidence below concerns beta 1 and earlier builds.
+
 | Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                                |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Individual/group motor control                                                 | Owner-operated Overkiz checks on earlier functional builds covered position, tilt, STOP, independent/shared commands and different member results.                                                                                                                                                                                           |
-| Current layout and steps                                                       | Independent code reviews and mock browser regressions; owner-operated passive HA checks covered loading/reload, expansion, both themes, editor changes, defaults, YAML key removal and save/reopen without observed movement. New steps have not been physically exercised.                                                                  |
+| Released detailed layout and steps                                             | Independent code reviews and mock browser regressions; owner-operated passive HA checks covered loading/reload, expansion, both themes, editor changes, defaults, YAML key removal and save/reopen without observed movement. New steps have not been physically exercised.                                                                  |
 | Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                                                                                               |
 | Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                                                                                            |
 | Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                                                                                       |
