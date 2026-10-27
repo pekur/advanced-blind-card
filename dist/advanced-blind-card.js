@@ -1,5 +1,5 @@
 /*!
-Advanced Blind Card v0.1.0-beta.3
+Advanced Blind Card v0.1.0-beta.4
 
 MIT License
 
