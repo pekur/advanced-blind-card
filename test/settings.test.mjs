@@ -36,6 +36,7 @@ test("legacy YAML gets immutable display defaults and preserves the original def
   for (const scope of [parsed, group, ...group.members]) {
     assert.deepEqual(options(scope), [true, true, true, true]);
     assert.equal(scope.positionStep, 10);
+    assert.equal(scope.layout, "detailed");
     assert.equal(scope.tiltStep, 10);
     assert.deepEqual(scope.tiltVisual, {
       mode: "single",
@@ -48,6 +49,39 @@ test("legacy YAML gets immutable display defaults and preserves the original def
   }
   for (let p = 0; p <= 100; p++)
     assert.ok(Math.abs(tiltRotation(p, group.tiltVisual) - p * 0.9) < 1e-10);
+});
+
+test("layout inherits card to group to member with an explicit detailed override", () => {
+  const input = grouped({ layout: "inline" }, {}, { layout: "detailed" });
+  const before = structuredClone(input);
+  const parsed = parseConfig(input),
+    group = parsed.rows[0];
+  assert.equal(parsed.layout, "inline");
+  assert.equal(group.layout, "inline");
+  assert.equal(group.members[0].layout, "detailed");
+  assert.equal(group.members[1].layout, "inline");
+  assert.deepEqual(input, before);
+  const overridden = parseConfig(
+    grouped({ layout: "inline" }, { layout: "detailed" }, { layout: "inline" }),
+  ).rows[0];
+  assert.equal(overridden.layout, "detailed");
+  assert.equal(overridden.members[0].layout, "inline");
+  assert.equal(overridden.members[1].layout, "detailed");
+});
+
+test("invalid layouts at every scope are rejected without accepting aliases or coerced values", () => {
+  for (const layout of [null, true, 1, "", "compact", "INLINE", {}, []]) {
+    for (const [input, path] of [
+      [grouped({ layout }), "card.layout"],
+      [grouped({}, { layout }), "blinds[0].layout"],
+      [grouped({}, {}, { layout }), "blinds[0].entities[0].layout"],
+    ]) {
+      assert.throws(
+        () => parseConfig(input),
+        (error) => error.detail?.params?.path === path,
+      );
+    }
+  }
 });
 
 test("all display fields inherit root to row to member with explicit false overrides", () => {

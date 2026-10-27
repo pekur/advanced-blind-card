@@ -58,13 +58,26 @@ export class AdvancedBlindCardEditor extends LitElement {
         ${sliderSteps.map((step) => html`<option value=${String(step)} .selected=${value === String(step)}>${step} %</option>`)}
       </select>`;
   }
+  private layoutSelect() {
+    const value = this.draft.value("layout");
+    return html`<label for="layout">${this.t("layout")}</label>
+      <select id="layout" .value=${live(value)} ?disabled=${!this.draft.editable}
+        aria-describedby="layout-help"
+        @change=${(event: Event) => this.change("layout", (event.currentTarget as HTMLSelectElement).value)}>
+        <option value="" .selected=${value === ""}>${this.t("default")} (${this.t("detailed")})</option>
+        <option value="detailed" .selected=${value === "detailed"}>${this.t("detailed")}</option>
+        <option value="inline" .selected=${value === "inline"}>${this.t("inline")}</option>
+      </select>`;
+  }
   protected render() {
     return html`<p id="editor-help">${this.t("editorIntro")}</p>
       ${this.draft.error ? html`<p id="editor-error" class="error" role="alert">${noticeText(this.draft.error, this.hass?.language)}${!this.draft.editable ? ` ${this.t("invalidYaml")}` : ""}</p>` : nothing}
       <div class="fields">
+        ${this.layoutSelect()}
         ${this.select("show_buttons", "buttons")}${this.select("show_name", "names")}
         ${this.select("show_state", "states")}${this.select("show_values", "values")}
       </div>
+      <p id="layout-help">${this.t("layoutHelp")}</p>
       <fieldset><legend>${this.t("steps")}</legend>
         <p id="step-help">${this.t("stepHelp")}</p><div class="fields">
         ${this.stepSelect("position_step", "positionStep")}

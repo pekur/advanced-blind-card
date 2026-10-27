@@ -125,6 +125,7 @@ Bezpečnost interakcí: žádný náhodný pohyb po tapnutí do neovládací obl
 - Požadavek vlastníka 2026-10-26: současná karta je příliš vysoká; navrhnout více režimů zobrazení včetně kompaktního. Šest hlavních položek se sbalenými skupinami má při srovnatelné šířce zabírat přibližně výšku šesti řádků v levé části referenčního snímku, nejvýše její dvojnásobek. Výškovou interpretaci a přesné měřitelné rozměry potvrdit při návrhu.
 - Před implementací společně vybrat režimy, jejich konfiguraci a rozložení ovladačů; upřesnit chování při rozbalení, pohybu, chybách a smíšených stavech. Zachovat dostupný STOP, bezpečné dokončování interakcí, čitelnost a použitelnost dotykem i klávesnicí.
 - Nejprve samostatně schválit návrh, poté implementaci; požadavek sám neschvaluje změnu runtime, další vydání ani nasazení.
+- Vlastník následně schválil lokální implementaci `layout: detailed | inline` s výchozím `detailed`, děděním karta → řádek → člen a globální volbou v editoru. Řádkový režim ponechá oba posuvníky a STOP přímo, Nahoru/Dolů v malém menu ⋮ a šipku pro přímé rozbalení členů bez velkého mezibloku. Ostatní makety Seznam/Kompaktní zatím nejsou součástí implementace. Před commitem, zveřejněním, novým vydáním nebo HA nasazením je potřeba příslušný samostatný souhlas.
 
 ## 6. Akceptační kritéria
 

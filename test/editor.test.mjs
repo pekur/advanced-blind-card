@@ -27,6 +27,39 @@ const fixture = (value = config()) => {
   return draft;
 };
 
+test("layout editor preserves overrides and metadata, echoes explicit choices and removes the global default", () => {
+  const input = config();
+  input.blinds[0].layout = "inline";
+  input.blinds[0].entities[0].layout = "detailed";
+  const before = structuredClone(input),
+    draft = fixture(input);
+  assert.equal(draft.value("layout"), "");
+  const first = draft.update("layout", "inline");
+  assert.equal(first.layout, "inline");
+  assert.deepEqual(first.blinds, before.blinds);
+  assert.deepEqual(first.layout_options, before.layout_options);
+  const second = draft.update("layout", "detailed");
+  assert.equal(second.layout, "detailed");
+  draft.setConfig(first);
+  assert.equal(
+    draft.value("layout"),
+    "detailed",
+    "old echoes do not overwrite a newer choice",
+  );
+  draft.setConfig(second);
+  const removed = draft.update("layout", "");
+  assert.equal(Object.hasOwn(removed, "layout"), false);
+  assert.deepEqual(removed, before);
+  assert.deepEqual(input, before);
+});
+
+test("an invalid layout edit stays local and a corrected layout can be emitted", () => {
+  const draft = fixture();
+  assert.equal(draft.update("layout", "compact"), undefined);
+  assert.match(noticeText(draft.error, "en"), /detailed or inline/);
+  assert.equal(draft.update("layout", "inline").layout, "inline");
+});
+
 const aliasedConfig = () => {
   const visual = {
     mode: "single",

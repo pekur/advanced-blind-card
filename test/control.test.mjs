@@ -17,6 +17,7 @@ const yaml = (entity = "cover.example", extra = {}) => ({
 });
 const allActions = ["position", "tilt", "open", "close", "stop", "stopTilt"];
 const defaultSettings = {
+  layout: "detailed",
   showButtons: true,
   showName: true,
   showState: true,

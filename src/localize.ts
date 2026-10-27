@@ -1,4 +1,11 @@
 const en = {
+  layout: "Layout",
+  detailed: "Detailed",
+  inline: "Inline / row",
+  layoutHelp:
+    "Inline keeps sliders and STOP in the row. Open / Close are in the actions menu. Groups expand directly to members.",
+  layoutInvalid: "{path} must be detailed or inline.",
+  moreActions: "More actions",
   position: "Position",
   tilt: "Slat tilt",
   shortTilt: "Tilt",
@@ -106,6 +113,13 @@ const en = {
 } as const;
 
 const cs: Record<keyof typeof en, string> = {
+  layout: "Rozložení",
+  detailed: "Podrobné",
+  inline: "Řádkové",
+  layoutHelp:
+    "Řádkové zobrazení ponechá posuvníky a STOP v řádku. Nahoru / Dolů jsou v menu příkazů. Skupina přímo rozbalí členy.",
+  layoutInvalid: "{path} musí být detailed nebo inline.",
+  moreActions: "Další příkazy",
   steps: "Kroky posuvníků",
   positionStep: "Krok polohy (%)",
   tiltStep: "Krok náklonu (%)",

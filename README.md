@@ -10,6 +10,9 @@ The owner confirmed installation through HACS and passive dashboard use in the
 environment described below. See [verification and limits](#verification-and-limits)
 before using it with devices.
 
+**Unreleased local development:** `layout: inline` below is not included in the
+published beta. It requires a build from this checkout.
+
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
 
 Example from the actual card bundle with simulated entities and generic names.
@@ -102,16 +105,17 @@ the current card instance and is cleared on configuration replacement or removal
 The following options inherit **card → row → group member**. A child overrides
 only explicitly supplied fields. Names, entity IDs, and `expandable` do not inherit.
 
-| Option                  | Default                                | Effect                                         |
-| ----------------------- | -------------------------------------- | ---------------------------------------------- |
-| `tilt_visual.mode`      | `single`                               | Preset: `single` or `bidirectional`            |
-| `tilt_visual.min_angle` | `-90`                                  | Minimum illustrative angle, from `-90` to `90` |
-| `tilt_visual.max_angle` | `0` for single, `90` for bidirectional | Maximum angle; must exceed the minimum         |
-| `tilt_visual.invert`    | `false`                                | Reverse SVG mapping only                       |
-| `show_buttons`          | `true`                                 | Show Open / Close; STOP remains                |
-| `show_name`             | `true`                                 | Show the heading name                          |
-| `show_state`            | `true`                                 | Show the ordinary idle state                   |
-| `show_values`           | `true`                                 | Show ordinary idle percentage labels           |
+| Option                  | Default                                | Effect                                           |
+| ----------------------- | -------------------------------------- | ------------------------------------------------ |
+| `tilt_visual.mode`      | `single`                               | Preset: `single` or `bidirectional`              |
+| `tilt_visual.min_angle` | `-90`                                  | Minimum illustrative angle, from `-90` to `90`   |
+| `tilt_visual.max_angle` | `0` for single, `90` for bidirectional | Maximum angle; must exceed the minimum           |
+| `tilt_visual.invert`    | `false`                                | Reverse SVG mapping only                         |
+| `show_buttons`          | `true`                                 | Show Open / Close; STOP remains                  |
+| `show_name`             | `true`                                 | Show the heading name                            |
+| `show_state`            | `true`                                 | Show the ordinary idle state                     |
+| `show_values`           | `true`                                 | Show ordinary idle percentage labels             |
+| `layout`                | `detailed`                             | `detailed` or `inline`; inherits to rows/members |
 
 Angles use **0° = horizontal** and ±90° = vertical. The default single range
 −90°→0° preserves the earlier illustration. Bidirectional −90°→90° is horizontal
@@ -182,7 +186,43 @@ loading, changing steps and state updates never send commands. Progress toleranc
 are independent of the step size.
 
 
-## Tile layout
+## Layouts
+
+The default `layout: detailed` preserves the existing tile layout. The optional,
+unreleased `layout: inline` keeps both sliders, supported STOP and a small actions
+menu in one row when space permits. On narrow cards the sliders move below the
+heading. The group arrow expands directly to members, whose layout inherits from
+the group unless explicitly overridden.
+
+```yaml
+type: custom:advanced-blind-card
+layout: inline
+blinds:
+  - name: Living room pair
+    entities:
+      - entity: cover.living_left
+      - entity: cover.living_right
+        layout: detailed
+  - entity: cover.office
+```
+
+With `show_buttons: true`, inline Open / Close commands are in the **⋮** menu.
+With `show_buttons: false`, that menu is hidden; supported STOP stays directly
+accessible, including while a movement response is pending. Opening/closing the
+menu or expanding a group sends no command. Opening a menu cancels active slider
+edits before focus changes. Escape closes the menu and restores focus; arrow keys
+navigate its actions. A fallback is included for browsers without the Popover API.
+The fallback remains subject to clipping and stacking contexts imposed by enclosing
+dashboard components.
+
+Six ordinary collapsed rows measure 462 px high at 490 px wide in the local
+mock-browser fixture. Expanded members, long names, errors, motion and unresolved
+targets can increase the height. Important readings and results remain visible;
+ordinary idle gesture instructions stay available to assistive technology.
+The inline layout has not yet undergone real HA/device testing. Existing beta
+verification below applies to the released detailed layout.
+
+### Detailed tile layout
 
 The position and tilt controls sit side by side, switching to a single column
 in a narrow card. Small stacked slats sit beside the tilt value. Expanded members
@@ -209,7 +249,7 @@ changes use polite announcements. Names remain accessible when headings are hidd
 and expansion retains focus on its button. Actual screen-reader support remains
 unverified; browser checks alone do not establish assistive-technology compatibility.
 
-The visual editor for an existing card changes only global `show_buttons`,
+The visual editor for an existing card changes only global `layout`, `show_buttons`,
 `show_name`, `show_state`, `show_values`, `position_step`, `tilt_step`, and
 `tilt_visual` options. Edit `blinds`,
 groups and member overrides in YAML. Their configuration and dashboard layout and

@@ -35,6 +35,7 @@ export const defaultTiltVisual: TiltVisual = Object.freeze({
   invert: false,
 });
 export interface RowSettings {
+  readonly layout: "detailed" | "inline";
   readonly showButtons: boolean;
   readonly showName: boolean;
   readonly showState: boolean;
@@ -102,6 +103,7 @@ const optionKeys = [
   ...Object.keys(booleanOptions),
   ...Object.keys(stepOptions),
   "tilt_visual",
+  "layout",
 ];
 type ExplicitSettings = {
   -readonly [K in Exclude<keyof RowSettings, "tiltVisual">]?: RowSettings[K];
@@ -117,6 +119,11 @@ function settingsFor(
     ...parent,
     tiltVisual: { ...parent.tiltVisual },
   };
+  if (value.layout !== undefined) {
+    if (value.layout !== "detailed" && value.layout !== "inline")
+      throw new MessageError("layoutInvalid", { path: `${path}.layout` });
+    explicit.layout = value.layout;
+  }
   for (const [key, field] of Object.entries(booleanOptions)) {
     const raw = value[key];
     if (raw === undefined) continue;
@@ -172,6 +179,7 @@ function settingsFor(
   return {
     explicit,
     resolved: Object.freeze({
+      layout: explicit.layout ?? "detailed",
       showButtons: explicit.showButtons ?? true,
       showName: explicit.showName ?? true,
       showState: explicit.showState ?? true,

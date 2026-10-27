@@ -2,6 +2,7 @@ import { errorNotice, MessageError, type Notice } from "./localize.ts";
 import { parseConfig } from "./model.ts";
 
 export type EditorField =
+  | "layout"
   | "show_buttons"
   | "show_name"
   | "show_state"
@@ -13,6 +14,7 @@ export type EditorField =
   | "min_angle"
   | "max_angle";
 const globalFields = new Set([
+  "layout",
   "show_buttons",
   "show_name",
   "show_state",
@@ -76,7 +78,7 @@ export class ConfigDraft {
       if (value === "") delete target[field];
       else if (field === "position_step" || field === "tilt_step")
         target[field] = Number(value);
-      else if (field === "mode") target[field] = value;
+      else if (field === "mode" || field === "layout") target[field] = value;
       else
         target[field] =
           value === "true" ? true : value === "false" ? false : value;

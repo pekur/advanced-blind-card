@@ -69,6 +69,9 @@ export class AdvancedBlindCard extends LitElement {
   private _hass: HomeAssistant | undefined;
   private generation = 0;
   private attached = false;
+  private menuView: View | undefined;
+  private menuFocus = false;
+  private topLayerMenu: HTMLElement | undefined;
   private pointer:
     | {
         id: number;
@@ -87,6 +90,7 @@ export class AdvancedBlindCard extends LitElement {
     );
   }
   private dispose() {
+    this.closeMenu();
     this.cancelInteraction();
     for (const view of this.views)
       if (view.controller instanceof GroupController) view.controller.dispose();
@@ -182,6 +186,10 @@ export class AdvancedBlindCard extends LitElement {
     window.addEventListener("pointermove", this.checkPointerButtons);
     window.addEventListener("blur", this.cancelInteraction);
     document.addEventListener("visibilitychange", this.visibilityChanged);
+    window.addEventListener("pointerdown", this.dismissMenu, true);
+    window.addEventListener("keydown", this.menuEscape, true);
+    window.addEventListener("resize", this.menuMoved);
+    window.addEventListener("scroll", this.menuMoved, true);
   }
   disconnectedCallback() {
     window.removeEventListener("pointerup", this.releasePointer);
@@ -190,6 +198,10 @@ export class AdvancedBlindCard extends LitElement {
     window.removeEventListener("pointermove", this.checkPointerButtons);
     window.removeEventListener("blur", this.cancelInteraction);
     document.removeEventListener("visibilitychange", this.visibilityChanged);
+    window.removeEventListener("pointerdown", this.dismissMenu, true);
+    window.removeEventListener("keydown", this.menuEscape, true);
+    window.removeEventListener("resize", this.menuMoved);
+    window.removeEventListener("scroll", this.menuMoved, true);
     this.attached = false;
     this.dispose();
     super.disconnectedCallback();
@@ -240,6 +252,7 @@ export class AdvancedBlindCard extends LitElement {
     for (const other of this.related(view)) this.cancelView(other);
   }
   private cancelInteraction = () => {
+    this.closeMenu();
     const focused = this.shadowRoot?.activeElement as HTMLInputElement | null;
     const focusedId = focused?.id;
     for (const view of this.allViews())
@@ -306,15 +319,15 @@ export class AdvancedBlindCard extends LitElement {
       return html`<ha-card><p role="status">${this.t("configure")}</p></ha-card>`;
     return keyed(
       this.generation,
-      html`<ha-card lang=${this.hass?.language?.toLowerCase().split(/[-_]/)[0] === "cs" ? "cs" : "en"}>${this.views.map((view) => this.row(view))}</ha-card>`,
+      html`<ha-card lang=${this.hass?.language?.toLowerCase().split(/[-_]/)[0] === "cs" ? "cs" : "en"}>${this.views.map((view) => this.row(view))}</ha-card>${this.menuView ? keyed(`${this.menuView.id}-${this.menuView.controller.revision}`, this.actionMenu(this.menuView)) : nothing}`,
     );
   }
   private row(view: View): ReturnType<typeof keyed> {
     const controller = view.controller;
+    const inline = view.settings.layout === "inline";
     const group =
       controller instanceof GroupController ? controller : undefined;
-    const generation = this.generation,
-      revision = controller.revision;
+    const revision = controller.revision;
     const entity =
       controller instanceof CoverController
         ? entityFor(controller.snapshot)
@@ -327,41 +340,32 @@ export class AdvancedBlindCard extends LitElement {
           ? this.t("entityMissing")
           : (this.hass.formatEntityState?.(entity) ??
             stateText(entity.state, this.hass?.language));
-    return keyed(
-      `${view.id}-${revision}`,
-      html`<section class=${view.parent ? "row child" : "row"} data-row=${view.id} aria-label=${this.nameFor(view)}>
-      <div class="heading"><span class="icon" aria-hidden="true">▤</span><div class="heading-text">
+    const heading = html`<span class="icon" aria-hidden="true">▤</span><div class="heading-text">
         ${view.settings.showName ? html`<h2>${this.nameFor(view)}</h2>` : nothing}
         <div class="metadata">
         ${view.settings.showState || !this.healthyIdle(view) ? html`<p class="state entity-state" role="status">${state}</p>` : nothing}
-        ${group ? html`<p class="state">${this.t("covers", { count: view.members.length })}</p>` : nothing}
+        ${group && (!inline || (!view.settings.showState && this.healthyIdle(view))) ? html`<p class="state">${this.t("covers", { count: view.members.length })}</p>` : nothing}
         </div>
-      </div>${
-        group && view.expandable
-          ? html`<button class="expand" type="button" aria-expanded=${String(view.expanded)}
-        aria-controls=${`${view.id}-members`} aria-label=${`${this.t(view.expanded ? "collapse" : "expand")} ${this.nameFor(view)}`}
-        @pointerdown=${(event: PointerEvent) => {
-          if (this.current(view, generation, revision, event))
-            this.cancelRelated(view);
-        }}
-        @click=${(event: MouseEvent) => {
-          if (this.current(view, generation, revision, event)) {
-            this.cancelRelated(view);
-            (event.currentTarget as HTMLButtonElement).focus({
-              preventScroll: true,
-            });
-            view.expanded = !view.expanded;
-            this.requestUpdate();
-          }
-        }}>${view.expanded ? "▴" : "▾"}</button>`
-          : nothing
-      }</div>
+      </div>`;
+    const expand = group && view.expandable ? this.expandButton(view) : nothing;
+    const sliders = keyed(
+      view.inputRevision,
+      html`<div class="sliders">${this.slider(view, "position", this.t("position"))}${this.slider(view, "tilt", this.t("tilt"))}</div>`,
+    );
+    return keyed(
+      `${view.id}-${revision}`,
+      html`<section class=${`row${view.parent ? " child" : ""}${inline ? " inline" : ""}`} data-row=${view.id} data-layout=${view.settings.layout} aria-label=${this.nameFor(view)}>
+      ${inline ? html`<div class="inline-grid"><div class="heading">${heading}</div>${sliders}<div class="inline-actions">${view.settings.showButtons ? this.menuButton(view) : nothing}${this.stopButton(view)}${expand}</div></div>` : html`<div class="heading">${heading}${expand}</div>`}
       ${this.movement(view)}
-      ${keyed(view.inputRevision, html`<div class="sliders">${this.slider(view, "position", this.t("position"))}${this.slider(view, "tilt", this.t("tilt"))}</div>`)}
+      ${inline ? nothing : sliders}
       ${this.controlDetails(view)}
       ${(["position", "tilt"] as const).map((axis) => html`<div id=${`${this.axisId(view, axis)}-progress`} class="progress" data-progress-axis=${axis}>${this.axisProgress(view, axis, this.report(view, axis))}</div>`)}
-      <div class="buttons">${view.settings.showButtons ? this.button(view, "open", this.t("open"), "↑") : nothing}
-        ${this.stopButton(view)}${view.settings.showButtons ? this.button(view, "close", this.t("close"), "↓") : nothing}</div>
+      ${
+        inline
+          ? nothing
+          : html`<div class="buttons">${view.settings.showButtons ? this.button(view, "open", this.t("open"), "↑") : nothing}
+        ${this.stopButton(view)}${view.settings.showButtons ? this.button(view, "close", this.t("close"), "↓") : nothing}</div>`
+      }
       ${controller.pending ? html`<p class="pending" role="status">${this.t("sending")}</p>` : nothing}
       ${controller.error ? html`<p class="error" role="alert">${controller.errorText(this.hass?.language)}</p>` : nothing}
       ${group && !view.expanded ? view.members.filter((member) => member.controller.error).map((member) => html`<p class="error" role="alert">${this.nameFor(member)}: ${member.controller.errorText(this.hass?.language)}</p>`) : nothing}
@@ -370,6 +374,218 @@ export class AdvancedBlindCard extends LitElement {
       ${group && view.expandable ? html`<div class="members" id=${`${view.id}-members`}>${view.expanded ? view.members.map((member) => this.row(member)) : nothing}</div>` : nothing}
     </section>`,
     );
+  }
+  private expandButton(view: View) {
+    const generation = this.generation,
+      revision = view.controller.revision;
+    return html`<button class="expand" type="button" aria-expanded=${String(view.expanded)}
+      aria-controls=${`${view.id}-members`} aria-label=${`${this.t(view.expanded ? "collapse" : "expand")} ${this.nameFor(view)}`}
+      @pointerdown=${(event: PointerEvent) => {
+        if (this.current(view, generation, revision, event))
+          this.cancelRelated(view);
+      }} @click=${(event: MouseEvent) => {
+        if (!this.current(view, generation, revision, event)) return;
+        this.closeMenu();
+        this.cancelRelated(view);
+        (event.currentTarget as HTMLButtonElement).focus({
+          preventScroll: true,
+        });
+        view.expanded = !view.expanded;
+        this.requestUpdate();
+      }}>${view.expanded ? "▴" : "▾"}</button>`;
+  }
+  private closeMenu(focus = false) {
+    const view = this.menuView;
+    if (!view) return;
+    this.menuView = undefined;
+    this.menuFocus = false;
+    if (this.topLayerMenu) {
+      try {
+        this.topLayerMenu.hidePopover();
+      } catch {
+        /* Already removed. */
+      }
+      this.topLayerMenu = undefined;
+    }
+    if (focus && this.isConnected && !document.hidden)
+      this.shadowRoot
+        ?.getElementById(`${view.id}-menu-toggle`)
+        ?.focus({ preventScroll: true });
+    this.requestUpdate();
+  }
+  private dismissMenu = (event: PointerEvent) => {
+    if (!this.menuView) return;
+    const menu = this.shadowRoot?.getElementById("action-menu");
+    const trigger = this.shadowRoot?.getElementById(
+      `${this.menuView.id}-menu-toggle`,
+    );
+    const path = event.composedPath();
+    if (
+      !path.includes(menu as EventTarget) &&
+      !path.includes(trigger as EventTarget)
+    )
+      this.closeMenu();
+  };
+  private menuEscape = (event: KeyboardEvent) => {
+    if (this.menuView && event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      this.closeMenu(true);
+    }
+  };
+  private menuMoved = () => {
+    this.positionMenu();
+  };
+  protected updated() {
+    this.positionMenu();
+  }
+  private positionMenu() {
+    const view = this.menuView;
+    if (!view || !this.isConnected) return;
+    const trigger = this.shadowRoot?.getElementById(`${view.id}-menu-toggle`);
+    const menu = this.shadowRoot?.getElementById("action-menu");
+    if (!trigger || !menu || (view.parent && !view.parent.expanded)) {
+      this.closeMenu();
+      return;
+    }
+    if (menu.hasAttribute("popover") && this.topLayerMenu !== menu) {
+      try {
+        menu.showPopover();
+        this.topLayerMenu = menu;
+      } catch {
+        menu.removeAttribute("popover");
+      }
+    }
+    const anchor = trigger.getBoundingClientRect(),
+      box = menu.getBoundingClientRect();
+    const gap = 6,
+      edge = 4;
+    const left = Math.max(
+      edge,
+      Math.min(anchor.right - box.width, window.innerWidth - box.width - edge),
+    );
+    const below = anchor.bottom + gap;
+    const above = Math.max(edge, anchor.top - box.height - gap);
+    let top = below + box.height <= window.innerHeight - edge ? below : above;
+    let x = left;
+    const stops = [
+      ...(this.shadowRoot?.querySelectorAll<HTMLButtonElement>("button.stop") ??
+        []),
+    ]
+      .filter((button) => button.getClientRects().length)
+      .map((button) => button.getBoundingClientRect());
+    const intersects = (a: number, b: number) =>
+      stops.some(
+        (stop) =>
+          Math.min(a + box.width, stop.right) > Math.max(a, stop.left) &&
+          Math.min(b + box.height, stop.bottom) > Math.max(b, stop.top),
+      );
+    if (intersects(x, top)) {
+      const options = [top, top === below ? above : below].filter(
+        (y) => y >= edge && y + box.height <= window.innerHeight - edge,
+      );
+      for (const y of options) {
+        const obstruction = stops.filter(
+          (stop) => stop.bottom > y && stop.top < y + box.height,
+        );
+        const shifted = Math.max(
+          edge,
+          Math.min(
+            left,
+            ...obstruction.map((stop) => stop.left - box.width - gap),
+          ),
+        );
+        if (!intersects(shifted, y)) {
+          x = shifted;
+          top = y;
+          break;
+        }
+      }
+    }
+    menu.style.left = `${x}px`;
+    menu.style.top = `${top}px`;
+    if (this.topLayerMenu !== menu) {
+      // A transformed ancestor changes the fixed fallback's coordinate system.
+      const placed = menu.getBoundingClientRect();
+      const scaleX = placed.width / menu.offsetWidth || 1;
+      const scaleY = placed.height / menu.offsetHeight || 1;
+      menu.style.left = `${x + (x - placed.left) / scaleX}px`;
+      menu.style.top = `${top + (top - placed.top) / scaleY}px`;
+    }
+    if (this.menuFocus) {
+      this.menuFocus = false;
+      (
+        menu.querySelector<HTMLButtonElement>("button:not(:disabled)") ?? menu
+      ).focus({ preventScroll: true });
+    }
+  }
+  private menuButton(view: View) {
+    const generation = this.generation,
+      revision = view.controller.revision;
+    return html`<button type="button" class="menu-toggle" id=${`${view.id}-menu-toggle`}
+      aria-label=${`${this.t("moreActions")} — ${this.nameFor(view)}`} aria-haspopup="menu"
+      aria-expanded=${String(this.menuView === view)} aria-controls=${this.menuView === view ? "action-menu" : nothing}
+      @pointerdown=${(event: PointerEvent) => {
+        if (this.current(view, generation, revision, event))
+          this.prepareMenu(view);
+      }} @click=${(event: MouseEvent) => {
+        if (!this.current(view, generation, revision, event)) return;
+        this.prepareMenu(view);
+        if (this.menuView === view) this.closeMenu(true);
+        else {
+          this.closeMenu();
+          this.menuView = view;
+          this.menuFocus = true;
+          this.requestUpdate();
+        }
+      }}>⋮</button>`;
+  }
+  private prepareMenu(view: View) {
+    // Opening an auxiliary menu must not commit another row's keyboard edit on blur.
+    for (const editing of this.allViews())
+      if (editing.controller.draft || this.pointer?.view === editing)
+        this.cancelView(editing);
+    this.cancelRelated(view);
+  }
+  private actionMenu(view: View) {
+    return html`<div id="action-menu" class="action-menu" role="menu" tabindex="-1"
+      lang=${this.hass?.language?.toLowerCase().split(/[-_]/)[0] === "cs" ? "cs" : "en"}
+      popover=${typeof HTMLElement.prototype.showPopover === "function" ? "manual" : nothing}
+      aria-label=${`${this.t("moreActions")} — ${this.nameFor(view)}`}
+      @focusout=${(event: FocusEvent) => {
+        if (
+          event.relatedTarget &&
+          !(event.currentTarget as HTMLElement).contains(
+            event.relatedTarget as Node,
+          )
+        )
+          this.closeMenu();
+      }} @keydown=${(event: KeyboardEvent) => {
+        if (event.key === "Tab") {
+          this.closeMenu(true);
+          return;
+        }
+        if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key))
+          return;
+        event.preventDefault();
+        const items = [
+          ...(
+            event.currentTarget as HTMLElement
+          ).querySelectorAll<HTMLButtonElement>("button:not(:disabled)"),
+        ];
+        if (!items.length) return;
+        const at = items.indexOf(
+          this.shadowRoot?.activeElement as HTMLButtonElement,
+        );
+        const next =
+          event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? items.length - 1
+              : (at + (event.key === "ArrowDown" ? 1 : -1) + items.length) %
+                items.length;
+        items[next]?.focus({ preventScroll: true });
+      }}>${this.button(view, "open", this.t("open"), "↑", true)}${this.button(view, "close", this.t("close"), "↓", true)}</div>`;
   }
   private axisId(view: View, axis: Axis) {
     return this.views.length === 1 && !view.parent && !view.members.length
@@ -434,11 +650,22 @@ export class AdvancedBlindCard extends LitElement {
     ]
       .filter(Boolean)
       .join(". ");
+    const quiet =
+      view.settings.layout === "inline" &&
+      !controller.draft &&
+      !controller.pending &&
+      details.every(
+        (detail) =>
+          !detail.reason &&
+          !detail.extra &&
+          (!group ||
+            group.members.every((member) => !member.reason(detail.axis))),
+      );
     const mapReason = !this.visualFor(view) ? this.t("differentMaps") : "";
     return html`<div class="control-details">
       ${details.map((detail) => html`<p id=${`${this.axisId(view, detail.axis)}-description`} class=${`description${visible(detail) ? "" : " sr-only"}${detail.chosen ? " draft-values" : ""}`}>${detail.text ? `${this.t(detail.axis === "position" ? "position" : "tilt")}: ${detail.text}` : nothing}</p>`)}
       ${mapReason ? html`<p id=${`${this.axisId(view, "tilt")}-visual`} class="description map-reason">${mapReason}</p>` : nothing}
-      <p id=${`${view.id}-instruction`} class="instruction">${instruction}</p>
+      <p id=${`${view.id}-instruction`} class=${`instruction${quiet ? " sr-only" : ""}`}>${instruction}</p>
     </div>`;
   }
   private slider(view: View, axis: Axis, label: string) {
@@ -488,7 +715,7 @@ export class AdvancedBlindCard extends LitElement {
       inputRevision === view.inputRevision &&
       (event.currentTarget as HTMLElement).isConnected;
     return html`<section class="slider" aria-label=${label}>
-      <div class="slider-label"><label for=${id}>${visibleLabel}${group ? html`<span class="target-label">${this.t("target")}</span>` : nothing}</label><div class="slider-values">${axis === "tilt" ? this.slats(group && !chosen ? reported : value, visual ?? defaultTiltVisual, mapReason) : nothing}${revealValues ? html`<output aria-live="off" for=${id}>${displayValue}</output>` : nothing}</div></div>
+      <div class="slider-label"><label for=${id}>${visibleLabel}${group ? html`<span class=${`target-label${view.settings.layout === "inline" ? " sr-only" : ""}`}>${this.t("target")}</span>` : nothing}</label><div class="slider-values">${axis === "tilt" ? this.slats(group && !chosen ? reported : value, visual ?? defaultTiltVisual, mapReason) : nothing}${revealValues ? html`<output aria-live="off" for=${id}>${displayValue}</output>` : nothing}</div></div>
       <input id=${id} type="range" min="0" max="100" step=${step} class=${!chosen && reported === null ? "unknown" : nothing}
         .value=${untouchedKeyboard ? noChange : live(String(value ?? 0))} ?disabled=${reason !== null}
         aria-label=${this.views.length === 1 && !group && !view.parent ? label : `${this.nameFor(view)} ${group ? this.t("targetAxis", { axis: label }) : label}`}
@@ -768,18 +995,25 @@ export class AdvancedBlindCard extends LitElement {
       ${rotation === null ? svg`<text x="32" y="60" font-size="36" text-anchor="middle">?</text>` : [16, 48, 80].map((y) => svg`<rect x="18" y=${y - 2} width="28" height="4" rx="2" transform=${`rotate(${90 - rotation} 32 ${y})`} />`)}
     </svg>`;
   }
-  private button(view: View, action: Action, label: string, symbol: string) {
+  private button(
+    view: View,
+    action: Action,
+    label: string,
+    symbol: string,
+    inMenu = false,
+  ) {
     const generation = this.generation,
       revision = view.controller.revision;
     const reason = view.controller.reason(action, this.hass?.language);
     const group =
       view.controller instanceof GroupController ? view.controller : undefined;
-    return html`<button type="button" aria-label=${this.views.length === 1 && !group && !view.parent ? label : `${this.nameFor(view)} ${label}`}
+    return html`<button type="button" role=${inMenu ? "menuitem" : nothing} aria-label=${this.views.length === 1 && !group && !view.parent ? label : `${this.nameFor(view)} ${label}`}
       ?disabled=${reason !== null} title=${reason ?? (group ? group.coverage(action, this.hass?.language) : label)} aria-description=${reason ?? (group ? group.coverage(action, this.hass?.language) : "")}
       @click=${(event: MouseEvent) => {
         if (this.current(view, generation, revision, event)) {
           this.prepare(view);
           void view.controller.perform(action);
+          if (inMenu) this.closeMenu(true);
         }
       }}><span class="button-symbol" aria-hidden="true">${symbol}</span><span>${this.t(action === "open" ? "up" : "down")}</span></button>`;
   }
@@ -797,6 +1031,7 @@ export class AdvancedBlindCard extends LitElement {
       }}
       @click=${(event: MouseEvent) => {
         if (this.current(view, generation, revision, event)) {
+          this.closeMenu();
           this.cancelRelated(view);
           void view.controller.stop();
         }
@@ -872,6 +1107,40 @@ export class AdvancedBlindCard extends LitElement {
       input { grid-row: 2; }
     }
     @container blind-card (max-width: 315px) { .sliders { grid-template-columns: minmax(0, 1fr); } }
+    .row.inline { padding:5px; }
+    ha-card > .row.inline + .row.inline { margin-top:6px; }
+    .inline-grid { display:grid; grid-template-columns:minmax(100px, 1.2fr) minmax(0, 2fr) auto; gap:6px; align-items:center; }
+    .inline-grid .heading { margin:0; gap:0; min-width:0; }
+    .inline-grid .icon { display:none; }
+    .inline-grid h2 { font-size:14px; line-height:18px; }
+    .inline-grid .metadata { display:block; }
+    .inline-grid .state { font-size:12px; line-height:16px; }
+    .inline-grid .sliders { min-width:0; gap:0 8px; grid-template-rows:none; grid-auto-rows:auto; }
+    .inline-grid .slider { display:flex; }
+    .inline-grid .slider-label { min-height:16px; align-items:center; gap:3px; }
+    .inline-grid .slider-label label { font-size:11px; line-height:16px; }
+    .inline-grid .slider-values { gap:3px; }
+    .inline-grid output { font-size:11px; line-height:16px; }
+    .inline-grid .slats { width:15px; height:16px; }
+    .inline-actions { display:flex; gap:6px; align-items:center; }
+    .inline-actions button { flex:none; width:44px; min-width:44px; min-height:44px; padding:0; margin:0; border:0;
+      background:var(--secondary-background-color, #f5f7f9); }
+    .inline-actions .menu-toggle { font-size:22px; }
+    .inline-actions .stop { color:inherit; font-size:11px; }
+    .inline-actions .stop .button-symbol { display:none; }
+    .inline > .members:not(:empty) { gap:6px; margin:6px 0 0 8px; padding-left:8px; border-left:1px solid var(--divider-color, #ddd); }
+    .action-menu { position:fixed; z-index:10; inset:auto; top:0; left:0; margin:0; display:grid; gap:4px; box-sizing:border-box;
+      width:144px; max-width:calc(100vw - 8px); padding:4px; border:1px solid var(--divider-color, #ccc); border-radius:10px;
+      color:var(--primary-text-color, #212121); background:var(--ha-card-background, var(--card-background-color, #fff)); }
+    .action-menu[popover]:not(:popover-open) { display:none; }
+    .action-menu button { display:flex; width:100%; min-height:44px; gap:8px; padding:8px; border:0; text-align:start; align-items:center;
+      background:var(--secondary-background-color, #f5f7f9); font-size:14px; }
+    @container blind-card (max-width:430px) {
+      .inline-grid { grid-template-columns:minmax(0,1fr) auto; row-gap:0; }
+      .inline-grid .heading { grid-column:1; grid-row:1; }
+      .inline-grid .inline-actions { grid-column:2; grid-row:1; }
+      .inline-grid .sliders { grid-column:1 / -1; grid-row:2; }
+    }
     .motion-icon { display: inline-block; color: var(--primary-color, #03a9f4); animation: motion-pulse 1s ease-in-out infinite alternate; }
     @keyframes motion-pulse { from { opacity: 0.45; } to { opacity: 1; } }
     @media (prefers-reduced-motion: reduce) { .motion-icon { animation: none; } }
