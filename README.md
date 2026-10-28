@@ -5,9 +5,9 @@ sliders, small stacked slats, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Latest published beta: [0.1.0-beta.6](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.6).**
-The local **0.1.0-beta.7 release candidate** adds tolerance-based progress for
-position and tilt. It has not yet been published or tested in real HA.
+**Latest published beta: [0.1.0-beta.7](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.7).**
+Beta 7 adds tolerance-based progress for position and tilt. Initial owner-operated
+Overkiz checks have been completed; other real-world configurations remain unverified.
 The default layout remains `detailed`.
 See [verification and limits](#verification-and-limits) before using it with devices.
 
@@ -87,7 +87,7 @@ Collapsed groups also show current individual targets and their live results,
 separately from the last common target. An individual target never becomes an
 implied common target for the group.
 
-In the beta 7 candidate, a fresh relevant HA reading within two percentage points
+In beta 7, a fresh relevant HA reading within two percentage points
 of the target is labelled **near**. Once the service accepts the command and the
 reading and state remain stable for two seconds without HA reporting movement,
 it is marked **within tolerance**. The actual HA value remains visible. This is
@@ -202,13 +202,13 @@ incomplete group readings are also shown in full below the row; unknown readings
 or incompatible mappings do not invent a common angle. Targets appear above the
 bar, without text covering the track. Settled successful results return the row
 to its ordinary state; full details remain available from the heading. In the
-beta 7 candidate, a tolerance result that later becomes historical is visible
+beta 7, a tolerance result that later becomes historical is visible
 again. Pending responses, failures and unconfirmed results remain visible.
 The native slider gestures and default detailed layout are
 preserved, including RTL direction and release-only dispatch. Select the heading
 to open the full detail; opening it cancels unfinished slider previews without
-sending them. Step settings do not round HA reports. Beta 7 has not been verified
-on real HA devices.
+sending them. Step settings do not round HA reports. Beta 7 has had initial
+owner-operated Overkiz checks; other integrations remain unverified.
 
 ```yaml
 type: custom:advanced-blind-card
@@ -291,14 +291,14 @@ updates never send motor commands.
 
 For a manual installation, [build the card](#development) from source or
 download `advanced-blind-card.js` from the
-[beta 6 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.6).
+[beta 7 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.7).
 Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0-beta.6
+/local/advanced-blind-card.js?v=0.1.0-beta.7
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -315,7 +315,7 @@ The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
 default HACS catalog is not claimed.
 Version **v0.1.0-beta.3** added responsive direct arrows. Version
 **v0.1.0-beta.5** adds lamella strips and quiet results. Beta 6 uses a graduated
-lamella scale. The beta 7 candidate is not yet available through HACS.
+lamella scale; beta 7 adds tolerance-based progress.
 
 The version-selection procedure was confirmed for beta 1 with HACS **2.0.5** and
 frontend **20250128065759**. In that environment the initial default download
@@ -327,7 +327,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.6**. Check that the download dialog names this tag rather than a
+   **v0.1.0-beta.7**. Check that the download dialog names this tag rather than a
    commit. If this beta is not offered, check the release and any HACS error;
    do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL
@@ -373,6 +373,17 @@ arrows in HA, and the owner independently reported working arrows and STOP, with
 a captured service trace or server-file hash. Owner screenshots of the filled-slider
 build prompted this UX revision; they do not establish a successful beta 5 smoke
 test. Beta 5 has only local tests and no real-device verification.
+
+For beta 7, the owner reported a successful passive load and group expansion.
+In supervised Overkiz checks, a bedroom tilt target of 10% was reported as 9%
+and its waiting highlight cleared without an error; a position target of 10%
+was reported as exactly 10%. A group tilt target of 90% was reported as 91% by
+both members and the waiting highlight cleared. These are owner observations,
+not a server-file hash or a measured two-second timing. Position tolerance,
+different group member results and STOP in beta 7 remain unverified on devices.
+The local beta 7 candidate passed build, Biome, 153 Node tests and 199 simulated
+browser regression scenarios; implementation and distribution reviews were
+completed, and the downloaded public JS matched the reviewed artifact.
 
 | Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
