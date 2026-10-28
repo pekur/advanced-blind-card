@@ -5,8 +5,8 @@ sliders, small stacked slats, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Experimental candidate: 0.1.0-beta.5 — not yet published.**
-This candidate adds lamella textures inside inline tilt bars, targets above the
+**Experimental beta: [0.1.0-beta.5](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.5).**
+This version adds lamella textures inside inline tilt bars, targets above the
 bars and quiet settled results. The default remains `detailed`.
 Beta 5 has not been installed through HACS or tested in real HA.
 See [verification and limits](#verification-and-limits) before using it with devices.
@@ -192,7 +192,7 @@ in one row when space permits. On narrow cards the sliders move below the
 heading. The group arrow expands directly to members, whose layout inherits from
 the group unless explicitly overridden.
 
-The **beta 5 candidate** uses filled inline position bars; reported tilt controls
+Version **beta 5** uses filled inline position bars; reported tilt controls
 lamella widths and gaps inside the entire inline bar using the configured visual
 angle and inversion. Mixed groups show the two range endpoints; unknown readings
 or incompatible mappings do not invent a common angle. Targets appear above the
@@ -284,10 +284,6 @@ updates never send motor commands.
 
 ## Installation and updates
 
-Beta 5 is a local candidate. Its release/HACS instructions below apply only after
-publication. [Published beta 4](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.4)
-remains available.
-
 For a manual installation, [build the card](#development) from source or
 download `advanced-blind-card.js` from the
 [beta 5 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.5).
@@ -313,7 +309,7 @@ The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
 `advanced-blind-card.js` asset. Add it as a custom repository; inclusion in the
 default HACS catalog is not claimed.
 Version **v0.1.0-beta.3** added responsive direct arrows. Version
-**v0.1.0-beta.5** candidate adds lamella strips and quiet results; its HACS
+**v0.1.0-beta.5** adds lamella strips and quiet results; its HACS
 installation has not been verified.
 
 The version-selection procedure was confirmed for beta 1 with HACS **2.0.5** and
@@ -326,7 +322,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.5**, once published. Check that the download dialog names this tag rather than a
+   **v0.1.0-beta.5**. Check that the download dialog names this tag rather than a
    commit. If this beta is not offered, check the release and any HACS error;
    do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL
@@ -362,7 +358,7 @@ The reviewed lamella implementation passed check/build, 146 Node tests and
 164 regressions, two previous review regressions and eight timeout/STOP checks)
 in Edge. Independent review found a held-service timeout losing its visible
 unconfirmed warning. It was fixed and independently rechecked, with no remaining
-findings. The beta 5 candidate differs from that reviewed and committed
+findings. The beta 5 bundle differs from that reviewed and committed
 implementation only in its version header and includes complete license notices.
 The owner confirmed installing beta 2 through HACS, loading without errors or
 observed movement, and passive inline menu/expansion use. These are observations,
@@ -380,7 +376,7 @@ test. Beta 5 has only local tests and no real-device verification.
 | Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                                                                                   |
 | Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                                                                                |
 | Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                                                                           |
-| Release artifact                                                               | Public beta 1, 3 and 4 JS assets matched their reviewed builds byte for byte. The beta 5 local candidate matches the reviewed implementation except for its version header and includes complete licenses; its public asset has not been published.                                                                              |
+| Release artifact                                                               | Public beta 1, 3 and 4 JS assets matched their reviewed builds byte for byte. The beta 5 bundle matches the reviewed implementation except for its version header and includes complete licenses. Compare a downloaded beta 5 asset with the SHA256 in its release notes.                                                        |
 | HACS                                                                           | Owner confirmed beta 1 installation, then updating to beta 2 with one resource and passive loading/menu/expansion without errors or observed movement on HACS 2.0.5 / frontend 20250128065759. Earlier beta 1 checks included the editor. HA server-file hash, actual rollback and minimum supported versions remain unverified. |
 
 The earlier owner-reported HA version was 2026.10.2; the later description
