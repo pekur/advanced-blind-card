@@ -6,6 +6,7 @@ import {
   CONFIRMATION_MS,
   progressLabels,
   progressText,
+  STABLE_MS,
 } from "../src/progress.ts";
 
 function deferred() {
@@ -145,23 +146,132 @@ test("HA updates before ACK do not fake acceptance or lose a later reported targ
   assert.equal(code(cover), "reached");
 });
 
-test("90/91 and fractional values remain near, never exact, and never send a correction", async () => {
-  for (const reported of [89, 91, 90.00001, 90.5]) {
+test("values within two points settle as tolerated without a correction", async () => {
+  for (const reported of [88, 89, 91, 92, 90.00001, 90.5]) {
     const { cover, update, calls, time } = fixture();
     await cover.perform("tilt", 90);
     update("a", { current_tilt_position: reported });
     assert.equal(code(cover, "tilt"), "near");
     assert.equal(cover.reported("tilt"), reported);
-    time.advance(CONFIRMATION_MS);
+    time.advance(STABLE_MS - 1);
     assert.equal(code(cover, "tilt"), "near");
+    time.advance(1);
+    assert.equal(code(cover, "tilt"), "tolerated");
     assert.equal(calls.length, 1);
     update("a", { current_tilt_position: 90 });
     assert.equal(code(cover, "tilt"), "reached");
   }
   const { cover, update } = fixture();
   await cover.perform("tilt", 90);
-  update("a", { current_tilt_position: 91.01 });
+  update("a", { current_tilt_position: 92.01 });
   assert.equal(code(cover, "tilt"), "waiting");
+});
+
+test("tolerance requires a fresh relevant reading and accepted service, resetting on changes", async () => {
+  const response = deferred();
+  const { cover, update, time, calls } = fixture(() => response.promise);
+  const request = cover.perform("position", 42);
+  update(
+    "a",
+    { friendly_name: "unrelated" },
+    undefined,
+    "2026-10-28T09:00:00Z",
+  );
+  time.advance(STABLE_MS * 2);
+  response.resolve();
+  await request;
+  assert.equal(code(cover), "waiting");
+  update("a", { current_position: 41 });
+  time.advance(STABLE_MS - 1);
+  update("a", { current_position: 40 });
+  time.advance(STABLE_MS - 1);
+  assert.equal(code(cover), "near");
+  time.advance(1);
+  assert.equal(code(cover), "tolerated");
+  update("a", { current_position: 35 });
+  assert.equal(cover.progress.status("position").historical, true);
+  assert.equal(calls.length, 1);
+});
+
+test("tolerance cannot complete while moving, unavailable, rejected, or interrupted", async () => {
+  for (const obstacle of ["moving", "unavailable", "stop", "failed"]) {
+    const failure = obstacle === "failed";
+    const { cover, update, time } = fixture((_domain, service) => {
+      if (failure && service === "set_cover_position")
+        throw new Error("refused");
+    });
+    await cover.perform("position", 60);
+    update(
+      "a",
+      { current_position: 59 },
+      obstacle === "moving" ? "opening" : "open",
+    );
+    if (obstacle === "unavailable") update("a", {}, "unavailable");
+    if (obstacle === "stop") await cover.stop();
+    time.advance(STABLE_MS * 2);
+    assert.notEqual(code(cover), "tolerated", obstacle);
+  }
+});
+
+test("group tolerance is independently timed and preserves mixed actual reports", async () => {
+  const { group, members, update, time } = fixture();
+  await group.perform("tilt", 40);
+  update("a", { current_tilt_position: 41 });
+  time.advance(1000);
+  update("b", { current_tilt_position: 42 });
+  time.advance(1000);
+  assert.deepEqual(groupCodes(group, "tilt"), ["tolerated", "near"]);
+  time.advance(1000);
+  assert.deepEqual(groupCodes(group, "tilt"), ["tolerated", "tolerated"]);
+  assert.deepEqual(
+    members.map((member) => member.reported("tilt")),
+    [41, 42],
+  );
+});
+
+test("fresh near data before delayed ACK does not complete until response", async () => {
+  const response = deferred();
+  const { cover, update, time } = fixture(() => response.promise);
+  const request = cover.perform("tilt", 40);
+  update("a", { current_tilt_position: 41 });
+  time.advance(STABLE_MS * 2);
+  assert.equal(code(cover, "tilt"), "sending");
+  response.resolve();
+  await request;
+  assert.equal(code(cover, "tilt"), "tolerated");
+});
+
+test("unrelated position motion cannot confirm an unchanged tilt", async () => {
+  const { cover, update, time } = fixture();
+  update("a", { current_tilt_position: 41 });
+  await cover.perform("tilt", 40);
+  update("a", { current_position: 41 }, "opening");
+  update("a", { current_position: 50 }, "open");
+  time.advance(STABLE_MS * 2);
+  assert.equal(code(cover, "tilt"), "waiting");
+});
+
+test("a changed tilt while moving settles only after HA stops reporting motion", async () => {
+  const { cover, update, time } = fixture();
+  await cover.perform("tilt", 40);
+  update("a", { current_tilt_position: 41 }, "opening");
+  time.advance(STABLE_MS * 2);
+  assert.notEqual(code(cover, "tilt"), "tolerated");
+  update("a", {}, "open");
+  time.advance(STABLE_MS);
+  assert.equal(code(cover, "tilt"), "tolerated");
+});
+
+test("a later stationary state change restarts the stability timer", async () => {
+  const { cover, update, time } = fixture();
+  await cover.perform("tilt", 40);
+  update("a", { current_tilt_position: 41 });
+  time.advance(1000);
+  update("a", {}, "closed");
+  time.advance(STABLE_MS - 1);
+  assert.equal(code(cover, "tilt"), "near");
+  time.advance(1);
+  assert.equal(code(cover, "tilt"), "tolerated");
 });
 
 test("lift movement never implies tilt movement or exact completion", async () => {

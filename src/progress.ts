@@ -9,7 +9,8 @@ import {
 } from "./model.ts";
 
 export const CONFIRMATION_MS = 120_000;
-export const NEAR_POINTS = 1;
+export const NEAR_POINTS = 2;
+export const STABLE_MS = 2_000;
 export type ProgressCode =
   | "sending"
   | "waiting"
@@ -17,6 +18,7 @@ export type ProgressCode =
   | "reached"
   | "already"
   | "near"
+  | "tolerated"
   | "unconfirmed"
   | "interrupted"
   | "failed"
@@ -47,9 +49,11 @@ export interface Goal {
   readonly initial: Observation;
   last: Observation;
   observed: boolean;
+  axisObserved?: boolean;
   departed?: boolean;
   transport: "sending" | "accepted" | "failed";
-  terminal?: "reached" | "already" | "interrupted";
+  terminal?: "reached" | "already" | "tolerated" | "interrupted";
+  stableSince?: number;
   historical?: boolean;
   reason?: Notice;
 }
@@ -111,7 +115,7 @@ function changed(a: Observation, b: Observation) {
     a.stamp !== b.stamp
   );
 }
-function complete(goal: Goal) {
+function complete(goal: Goal, now: number) {
   if (
     goal.terminal ||
     goal.transport !== "accepted" ||
@@ -128,7 +132,13 @@ function complete(goal: Goal) {
     )
       goal.terminal = "already";
     else if (goal.observed) goal.terminal = "reached";
-  }
+  } else if (
+    goal.stableSince !== undefined &&
+    now - goal.stableSince >= STABLE_MS &&
+    goal.last.value !== null &&
+    Math.abs(goal.last.value - goal.target) <= NEAR_POINTS
+  )
+    goal.terminal = "tolerated";
 }
 
 // Observation only: no service calls, gesture changes, polling, retries or persistence.
@@ -175,16 +185,55 @@ export class ProgressTracker {
       const goal = this.goals[axis];
       if (!goal) continue;
       const next = observe(snapshot, axis, goal.action);
+      const relevantChange =
+        next.value !== goal.last.value ||
+        next.state !== goal.last.state ||
+        next.problem !== goal.last.problem;
       if (changed(goal.last, next)) goal.observed = true;
+      if (next.problem) goal.axisObserved = false;
+      if (
+        next.value !== goal.last.value &&
+        next.value !== null &&
+        !next.problem
+      )
+        goal.axisObserved = true;
+      if (relevantChange) {
+        const freshAxis =
+          next.value !== goal.last.value ||
+          (goal.axisObserved && next.state !== goal.last.state);
+        goal.stableSince =
+          freshAxis &&
+          !next.problem &&
+          !moving(next) &&
+          next.value !== null &&
+          Math.abs(next.value - goal.target) <= NEAR_POINTS
+            ? this.clock.now()
+            : undefined;
+      }
       if (!next.problem && (next.value !== goal.target || moving(next)))
         goal.departed = true;
       if (
-        (goal.terminal === "reached" || goal.terminal === "already") &&
-        (next.problem || moving(next) || next.value !== goal.target)
+        (goal.terminal === "reached" ||
+          goal.terminal === "already" ||
+          goal.terminal === "tolerated") &&
+        (next.problem ||
+          moving(next) ||
+          next.value === null ||
+          (goal.terminal === "tolerated"
+            ? Math.abs(next.value - goal.target) > NEAR_POINTS
+            : next.value !== goal.target))
       )
         goal.historical = true;
       goal.last = next;
-      complete(goal);
+      if (
+        goal.terminal === "tolerated" &&
+        !goal.historical &&
+        !next.problem &&
+        !moving(next) &&
+        next.value === goal.target
+      )
+        goal.terminal = "reached";
+      complete(goal, this.clock.now());
     }
     this.arm();
   }
@@ -192,7 +241,7 @@ export class ProgressTracker {
     if (this.goals[goal.axis] !== goal) return;
     goal.transport = failed === undefined ? "accepted" : "failed";
     goal.reason = failed;
-    complete(goal);
+    complete(goal, this.clock.now());
     this.arm();
   }
   interrupt(id: number, channels: readonly ("stop" | "stopTilt")[]) {
@@ -235,7 +284,7 @@ export class ProgressTracker {
     if (goal.last.problem) return { ...base, code: goal.last.problem };
     if (
       !moving(goal.last) &&
-      goal.observed &&
+      goal.stableSince !== undefined &&
       goal.last.value !== null &&
       Math.abs(goal.last.value - goal.target) <= NEAR_POINTS
     )
@@ -275,6 +324,13 @@ export class ProgressTracker {
     const deadlines = Object.values(this.goals)
       .filter((goal) => !goal.terminal && goal.transport !== "failed")
       .map((goal) => goal.started + CONFIRMATION_MS);
+    for (const goal of Object.values(this.goals))
+      if (
+        !goal.terminal &&
+        goal.transport === "accepted" &&
+        goal.stableSince !== undefined
+      )
+        deadlines.push(goal.stableSince + STABLE_MS);
     if (
       this.stopAttempt &&
       Object.values(this.stopAttempt.channels).includes("sending")
@@ -285,6 +341,8 @@ export class ProgressTracker {
       this.cancelTimer = this.clock.schedule(
         () => {
           this.cancelTimer = undefined;
+          for (const goal of Object.values(this.goals))
+            complete(goal, this.clock.now());
           this.notify();
           this.arm();
         },
@@ -301,6 +359,7 @@ const labels = {
     reached: "Target reported by HA",
     already: "Target already reported before command",
     near: "Near target — exact result unconfirmed",
+    tolerated: "Within tolerance — reported by HA",
     unconfirmed: "Result unconfirmed",
     interrupted: "Target interrupted — physical stop unconfirmed",
     failed: "Command failed",
@@ -331,6 +390,7 @@ const labels = {
     reached: "Cíl hlášený HA",
     already: "Cíl byl hlášený již před příkazem",
     near: "Blízko cíle — přesně nepotvrzeno",
+    tolerated: "Dosaženo v toleranci dle HA",
     unconfirmed: "Výsledek nepotvrzen",
     interrupted: "Cíl přerušen — fyzické zastavení nepotvrzeno",
     failed: "Příkaz selhal",
@@ -369,7 +429,9 @@ export function progressSymbol(status: ProgressStatus) {
       ? "≈"
       : status.code === "moving"
         ? "↕"
-        : status.code === "reached" || status.code === "already"
+        : status.code === "reached" ||
+            status.code === "already" ||
+            status.code === "tolerated"
           ? "✓"
           : status.code === "sending" || status.code === "waiting"
             ? "◷"

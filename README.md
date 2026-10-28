@@ -5,11 +5,10 @@ sliders, small stacked slats, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Experimental beta: [0.1.0-beta.5](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.5).**
-This repository also contains the local **0.1.0-beta.6 release candidate**. Its
-inline tilt slider has a graduated lamella scale and aligned target values;
-mixed or incomplete group readings remain visible. The default remains `detailed`.
-The beta 6 candidate has not yet been published or tested in real HA.
+**Latest published beta: [0.1.0-beta.6](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.6).**
+The local **0.1.0-beta.7 release candidate** adds tolerance-based progress for
+position and tilt. It has not yet been published or tested in real HA.
+The default layout remains `detailed`.
 See [verification and limits](#verification-and-limits) before using it with devices.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
@@ -88,7 +87,11 @@ Collapsed groups also show current individual targets and their live results,
 separately from the last common target. An individual target never becomes an
 implied common target for the group.
 
-A result within one percentage point is labelled **near**, never exactly reached.
+In the beta 7 candidate, a fresh relevant HA reading within two percentage points
+of the target is labelled **near**. Once the service accepts the command and the
+reading and state remain stable for two seconds without HA reporting movement,
+it is marked **within tolerance**. The actual HA value remains visible. This is
+an estimate based on HA data, not proof that the motor physically stopped.
 After 120 seconds without confirmation, the result is unconfirmed; this UI deadline
 does not release pending service requests or send any command. Later HA data can
 clarify the result. STOP interrupts tracked goals and reports service responses
@@ -193,18 +196,19 @@ in one row when space permits. On narrow cards the sliders move below the
 heading. The group arrow expands directly to members, whose layout inherits from
 the group unless explicitly overridden.
 
-Version **beta 5** uses filled inline position bars; reported tilt controls
-lamella widths and gaps inside the entire inline bar using the configured visual
-angle and inversion. Mixed groups show the two range endpoints; unknown readings
+The inline position bar is filled. Since **beta 6**, the tilt bar uses a fixed
+graduated lamella scale based on the configured angle and inversion. Mixed or
+incomplete group readings are also shown in full below the row; unknown readings
 or incompatible mappings do not invent a common angle. Targets appear above the
-bar, without text covering the track. Successful and historical results return
-the row to its ordinary state once the service response settles; the full result
-remains in the heading detail. Pending responses, failures and unconfirmed results
-remain visible. The native slider gestures and default detailed layout are
+bar, without text covering the track. Settled successful results return the row
+to its ordinary state; full details remain available from the heading. In the
+beta 7 candidate, a tolerance result that later becomes historical is visible
+again. Pending responses, failures and unconfirmed results remain visible.
+The native slider gestures and default detailed layout are
 preserved, including RTL direction and release-only dispatch. Select the heading
 to open the full detail; opening it cancels unfinished slider previews without
-sending them. Step settings do not round HA reports. These revisions are not part
-of published beta 4 and have not been verified on real HA devices.
+sending them. Step settings do not round HA reports. Beta 7 has not been verified
+on real HA devices.
 
 ```yaml
 type: custom:advanced-blind-card
@@ -287,14 +291,14 @@ updates never send motor commands.
 
 For a manual installation, [build the card](#development) from source or
 download `advanced-blind-card.js` from the
-[beta 5 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.5).
+[beta 6 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.6).
 Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0-beta.5
+/local/advanced-blind-card.js?v=0.1.0-beta.6
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -310,8 +314,8 @@ The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
 `advanced-blind-card.js` asset. Add it as a custom repository; inclusion in the
 default HACS catalog is not claimed.
 Version **v0.1.0-beta.3** added responsive direct arrows. Version
-**v0.1.0-beta.5** adds lamella strips and quiet results. The beta 6 candidate
-is not yet available through HACS; continue to select an actual published tag.
+**v0.1.0-beta.5** adds lamella strips and quiet results. Beta 6 uses a graduated
+lamella scale. The beta 7 candidate is not yet available through HACS.
 
 The version-selection procedure was confirmed for beta 1 with HACS **2.0.5** and
 frontend **20250128065759**. In that environment the initial default download
@@ -323,7 +327,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.5**. Check that the download dialog names this tag rather than a
+   **v0.1.0-beta.6**. Check that the download dialog names this tag rather than a
    commit. If this beta is not offered, check the release and any HACS error;
    do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL

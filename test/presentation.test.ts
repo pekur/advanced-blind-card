@@ -98,6 +98,11 @@ test("compact text keeps uncertainty, history and pending response explicit", ()
 });
 
 test("successful and historical goals become quiet without losing unresolved or rejected results", () => {
+  assert.equal(quietResult({ code: "tolerated", target: 50 }), true);
+  assert.equal(
+    quietResult({ code: "tolerated", target: 50, historical: true }),
+    false,
+  );
   for (const code of ["reached", "already"] as const) {
     for (const historical of [false, true]) {
       const status = { code, historical, target: 50 };

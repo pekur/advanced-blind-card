@@ -9,6 +9,7 @@ const labels: Record<ProgressCode, [string, string]> = {
   reached: ["Cíl hlášen HA", "HA reports target"],
   already: ["Již v cíli dle HA", "Already at target per HA"],
   near: ["Blízko · nepotvrzeno", "Near · unconfirmed"],
+  tolerated: ["V toleranci dle HA", "Within tolerance per HA"],
   unconfirmed: ["Výsledek nepotvrzen", "Result unconfirmed"],
   interrupted: ["Přerušeno · nepotvrzeno", "Interrupted · unconfirmed"],
   failed: ["Chyba příkazu", "Command failed"],
@@ -28,7 +29,8 @@ export function quietResult(status: ProgressStatus) {
   return (
     !status.pending &&
     !status.reason &&
-    ["reached", "already"].includes(status.code)
+    !(status.code === "tolerated" && status.historical) &&
+    ["reached", "already", "tolerated"].includes(status.code)
   );
 }
 
