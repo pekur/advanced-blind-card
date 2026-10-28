@@ -5,11 +5,10 @@ sliders, small stacked slats, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Latest published beta: [0.1.0-beta.7](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.7).**
-Beta 7 adds tolerance-based progress for position and tilt. Initial owner-operated
-Overkiz checks have been completed; other real-world configurations remain unverified.
-The local beta 8 candidate adds direct mobile arrows and a narrower desktop name
-column; it has not been published or tested on actual devices.
+**Latest published beta: [0.1.0-beta.8](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.8).**
+Beta 8 adds direct mobile arrows and a narrower desktop name column. Beta 7 added
+tolerance-based progress for position and tilt; initial owner-operated Overkiz
+checks have been completed. Other real-world configurations remain unverified.
 The default layout remains `detailed`.
 See [verification and limits](#verification-and-limits) before using it with devices.
 
@@ -224,14 +223,20 @@ blinds:
   - entity: cover.office
 ```
 
-In the current unpublished source, `show_buttons: true` shows direct **↑ / ↓**
+In beta 8, `show_buttons: true` shows direct **↑ / ↓**
 buttons at all widths: side by side at 430 px or narrower, stacked above that.
 Mobile arrows and STOP have 44 × 44 px targets; the stacked desktop arrows are
 44 × 28 px. The name column is narrower on desktop to leave more space for sliders.
 With `show_buttons: false`, arrows are hidden while STOP remains directly accessible,
 including while a movement response is pending. Expanding a group sends no command;
 direct arrows cancel an unfinished slider preview before sending their own command.
-Published beta 7 instead uses a **⋮** menu on narrow cards. No YAML change is needed.
+Beta 7 used a **⋮** menu on narrow cards. No YAML change is needed.
+
+Inline layout, rendered with simulated Home Assistant entities:
+
+| Phone, dark theme                                                                             | Desktop, light theme                                                                         |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| ![Mobile inline card with an expanded group and direct arrows](images/inline-mobile-dark.png) | ![Desktop inline card with direct arrows and wider sliders](images/inline-desktop-light.png) |
 
 Six ordinary collapsed rows measure 462 px high at 490 px wide in the local
 mock-browser fixture. Expanded members, long names, errors, motion and unresolved
@@ -288,14 +293,14 @@ updates never send motor commands.
 
 For a manual installation, [build the card](#development) from source or
 download `advanced-blind-card.js` from the
-[beta 7 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.7).
+[beta 8 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.8).
 Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0-beta.7
+/local/advanced-blind-card.js?v=0.1.0-beta.8
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -312,7 +317,7 @@ The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
 default HACS catalog is not claimed.
 Version **v0.1.0-beta.3** added responsive direct arrows. Version
 **v0.1.0-beta.5** adds lamella strips and quiet results. Beta 6 uses a graduated
-lamella scale; beta 7 adds tolerance-based progress.
+lamella scale; beta 7 adds tolerance-based progress and beta 8 direct mobile arrows.
 
 The version-selection procedure was confirmed for beta 1 with HACS **2.0.5** and
 frontend **20250128065759**. In that environment the initial default download
@@ -324,7 +329,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.7**. Check that the download dialog names this tag rather than a
+   **v0.1.0-beta.8**. Check that the download dialog names this tag rather than a
    commit. If this beta is not offered, check the release and any HACS error;
    do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL
@@ -384,6 +389,12 @@ different group member results and STOP in beta 7 remain unverified on devices.
 The local beta 7 candidate passed build, Biome, 153 Node tests and 199 simulated
 browser regression scenarios; implementation and distribution reviews were
 completed, and the downloaded public JS matched the reviewed artifact.
+
+For beta 8, the owner supplied phone and desktop screenshots in light and dark
+themes, including an expanded group, and reported that the controls work well.
+These observations do not include a captured service trace or HA server-file hash.
+The beta 8 candidate passed build, Biome, 153 Node tests and 178 simulated browser
+scenarios; the downloaded public JS matched the independently reviewed artifact.
 
 | Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
