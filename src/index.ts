@@ -1,4 +1,4 @@
-import { css, html, LitElement, noChange, nothing, svg } from "lit";
+import { css, html, LitElement, noChange, nothing } from "lit";
 import { keyed } from "lit/directives/keyed.js";
 import { live } from "lit/directives/live.js";
 import "./editor.ts";
@@ -24,8 +24,6 @@ import {
   type RowSettings,
   sharedTiltVisual,
   snapTarget,
-  type TiltVisual,
-  tiltRotation,
 } from "./model.ts";
 import {
   barPresentation,
@@ -963,7 +961,7 @@ export class AdvancedBlindCard extends LitElement {
         : undefined;
     const inputClass = [
       !chosen && reported === null ? "unknown" : "",
-      inline && draft ? "range-editing" : "",
+      draft ? "range-editing" : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -1073,10 +1071,8 @@ export class AdvancedBlindCard extends LitElement {
     const reportWidth = bar.target === undefined ? 8 : 2;
     const angleUnknown = axis === "tilt" && (!visual || bar.uncertain);
     return html`<section class="slider" aria-label=${label}>
-      <div class="slider-label"><label for=${id}>${visibleLabel}${group ? html`<span class=${`target-label${inline ? " sr-only" : ""}`}>${this.t("target")}</span>` : nothing}</label>${inline && indicator ? html`<span class="axis-phase" data-code=${visibleStatus?.code ?? (draft ? "preview" : "mixed")} data-tone=${bar.tone} role="status" aria-label=${indicatorText} title=${indicatorText}>${indicator}</span>` : nothing}<div class="slider-values">${axis === "tilt" && !inline ? this.slats(group && !chosen ? reported : value, visual ?? defaultTiltVisual, mapReason) : nothing}${revealValues ? html`<output aria-live="off" for=${id} title=${inline ? `${this.t("reported")}: ${report}` : nothing}>${inline ? this.report(view, axis, true) : displayValue}</output>` : nothing}${inline && bar.target !== undefined ? html`<span class="inline-target" aria-label=${`${this.t(draft ? "preview" : "target")}: ${bar.target}%`}>→ ${bar.target}%</span>` : nothing}</div></div>
-      ${
-        inline
-          ? html`<div class="range-control" data-axis=${axis} data-tone=${bar.tone} data-uncertain=${String(bar.uncertain)} data-angle-unknown=${String(angleUnknown)} data-active=${String(bar.target !== undefined)}>
+      <div class="slider-label"><label for=${id}>${visibleLabel}${group ? html`<span class=${`target-label${inline ? " sr-only" : ""}`}>${this.t("target")}</span>` : nothing}</label>${inline && indicator ? html`<span class="axis-phase" data-code=${visibleStatus?.code ?? (draft ? "preview" : "mixed")} data-tone=${bar.tone} role="status" aria-label=${indicatorText} title=${indicatorText}>${indicator}</span>` : nothing}<div class="slider-values">${revealValues ? html`<output aria-live="off" for=${id} title=${inline ? `${this.t("reported")}: ${report}` : nothing}>${inline ? this.report(view, axis, true) : displayValue}</output>` : nothing}${inline && bar.target !== undefined ? html`<span class="inline-target" aria-label=${`${this.t(draft ? "preview" : "target")}: ${bar.target}%`}>→ ${bar.target}%</span>` : nothing}</div></div>
+      <div class="range-control" data-axis=${axis} data-tone=${bar.tone} data-uncertain=${String(bar.uncertain)} data-angle-unknown=${String(angleUnknown)} data-active=${String(bar.target !== undefined)}>
         <div class="range-track" aria-hidden="true">
           <span class="range-fill" style=${`width:${bar.min}%`}></span>
           <span class="range-mixed" style=${`inset-inline-start:${bar.min}%;width:${bar.max - bar.min}%`}></span>
@@ -1085,9 +1081,7 @@ export class AdvancedBlindCard extends LitElement {
           ${bar.target !== undefined && !draft ? html`<span class="range-target" style=${`inset-inline-start:clamp(0px, calc(${targetPosition}% - 4px), calc(100% - 8px))`}></span>` : nothing}
         </div>
         ${input}
-      </div>`
-          : input
-      }
+      </div>
     </section>`;
   }
   private axisProgress(view: View, axis: Axis, report: string) {
@@ -1264,12 +1258,6 @@ export class AdvancedBlindCard extends LitElement {
         ?.members.some((member) => unresolved(member.status))
     );
   }
-  private slats(value: number | null, visual: TiltVisual, reason: string) {
-    const rotation = reason ? null : tiltRotation(value, visual);
-    return html`<svg class="slats" viewBox="0 0 64 96" role="img" aria-label=${reason || (rotation === null ? this.t("unknownAngle") : this.t("slatPreview", { value: value ?? 0 }))}>
-      ${rotation === null ? svg`<text x="32" y="60" font-size="36" text-anchor="middle">?</text>` : [16, 48, 80].map((y) => svg`<rect x="18" y=${y - 2} width="28" height="4" rx="2" transform=${`rotate(${90 - rotation} 32 ${y})`} />`)}
-    </svg>`;
-  }
   private button(
     view: View,
     action: Action,
@@ -1358,7 +1346,7 @@ export class AdvancedBlindCard extends LitElement {
     .state, .description, .instruction, .pending { color: var(--secondary-text-color, #666); }
     .sliders { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; row-gap: 0; }
     .slider { min-width: 0; display: flex; flex-direction: column; }
-    .slider-label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; min-height: 44px; gap: 4px; }
+    .slider-label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; min-height: 32px; gap: 4px; }
     .slider-label label { min-width: 0; font-size: 12px; line-height: 1.4; color: var(--secondary-text-color, #666); overflow-wrap: anywhere; }
     .target-label { display: block; font-size: 11px; }
     .slider-values { display: flex; align-items: center; min-width: 0; gap: 4px; }
@@ -1370,7 +1358,6 @@ export class AdvancedBlindCard extends LitElement {
     .description, .instruction { overflow-wrap: anywhere; }
     .description:empty, .instruction:empty { display: none; }
     .control-details > :not(.sr-only):not(:empty) { margin-top: 4px; }
-    .slats { flex: none; width: 32px; height: 40px; fill: var(--primary-color, #03a9f4); }
     .buttons { display: flex; gap: 8px; margin-top: 8px; }
     button { flex: 1; min-height: 44px; min-width: 0; padding: 6px 4px; border-radius: 9px;
       border: 1px solid var(--divider-color, #ccc); background: transparent; color: inherit; font: inherit; cursor: pointer; }
@@ -1398,7 +1385,7 @@ export class AdvancedBlindCard extends LitElement {
     .transport { margin-top: 8px; color: var(--secondary-text-color, #666); font-size: 12px; overflow-wrap: anywhere; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     @supports (grid-template-rows: subgrid) {
-      .sliders { grid-template-rows: minmax(44px, auto) 44px; grid-auto-rows: minmax(44px, auto); }
+      .sliders { grid-template-rows: minmax(32px, auto) 44px; grid-auto-rows: minmax(32px, auto); }
       .slider { display: grid; grid-template-rows: subgrid; grid-row: span 2; row-gap: 0; }
       .slider-label { grid-row: 1; }
       input { grid-row: 2; }
@@ -1455,6 +1442,17 @@ export class AdvancedBlindCard extends LitElement {
     .range-control input::-moz-range-thumb { height:28px; width:8px; box-sizing:border-box; border:1px solid #41454a; border-radius:8px; background:#fff; }
     .range-control input:not(.range-editing)::-webkit-slider-thumb { visibility:hidden; }
     .range-control input:not(.range-editing)::-moz-range-thumb { visibility:hidden; }
+    @media (forced-colors: active) {
+      .range-track { forced-color-adjust:none; background:Canvas; outline:1px solid CanvasText; outline-offset:-1px; box-shadow:none; }
+      .range-control[data-active="true"] .range-track::after { background:transparent; }
+      .range-fill { forced-color-adjust:none; background:Highlight; opacity:1; }
+      .range-mixed, .range-control[data-axis="tilt"] .range-mixed { forced-color-adjust:none; background:repeating-linear-gradient(120deg, Highlight 0 2px, Canvas 2px 5px); opacity:1; }
+      .range-lamella > span::before { forced-color-adjust:none; background:CanvasText; }
+      .range-control[data-uncertain="true"] .range-track, .range-control[data-angle-unknown="true"] .range-track { background:repeating-linear-gradient(120deg, Canvas 0 4px, CanvasText 4px 5px); }
+      .range-target, .range-report, .range-control[data-active="true"] .range-report { forced-color-adjust:none; border:1px solid Canvas; background:CanvasText; opacity:1; }
+      .range-control input::-webkit-slider-thumb { forced-color-adjust:none; border:1px solid Canvas; background:CanvasText; }
+      .range-control input::-moz-range-thumb { forced-color-adjust:none; border:1px solid Canvas; background:CanvasText; }
+    }
     .inline-actions { display:flex; gap:6px; align-items:center; }
     .inline-actions button { flex:none; width:44px; min-width:44px; min-height:44px; padding:0; margin:0; border:0;
       background:var(--secondary-background-color, #f5f7f9); }

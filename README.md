@@ -1,7 +1,7 @@
 # Advanced Blind Card
 
 A Home Assistant dashboard card for blind position and slat tilt, with inline
-sliders, small stacked slats, expandable groups and supported STOP controls.
+sliders, graduated slat scales, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
@@ -10,11 +10,13 @@ Beta 8 adds direct mobile arrows and a narrower desktop name column. Beta 7 adde
 tolerance-based progress for position and tilt; initial owner-operated Overkiz
 checks have been completed. Other real-world configurations remain unverified.
 The default layout remains `detailed`.
+The local beta 9 candidate also gives the detailed layout the same slider style
+as inline; the image below shows this unpublished version.
 See [verification and limits](#verification-and-limits) before using it with devices.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
 
-Example from the actual card bundle with simulated entities and generic names.
+Example from the locally built card with simulated entities and generic names.
 
 ## Configuration
 
@@ -51,7 +53,7 @@ covers, groups and member overrides use YAML.
 Group readings show the actual range (such as 40–60%), plus unknown, unavailable,
 or unsupported members. They never substitute an average. Group sliders select an
 explicit target; reported values remain visible while previewing. An unknown or
-mixed tilt has no invented SVG angle. Releasing a group slider sends the same
+mixed tilt has no invented single angle. Releasing a group slider sends the same
 target separately to each eligible member. Skipped members and failures are
 reported; accepted commands do not prove that a motor physically reached its target.
 Expanded member controls affect only that member. Errors remain visible when
@@ -65,10 +67,10 @@ or a cancelled pointer gesture discards the preview. Incoming state updates do n
 interrupt an active edit. A keyboard edit also commits on focus loss.
 Switching away from the page or losing pointer capture discards an active drag.
 
-The compact SVG is no taller than a range control and stacks the slats vertically,
-each tilting around its own center. By default,
-it shows vertical slats at 0% and horizontal slats at 100%. This is an
-illustration, not a measured physical angle; service values are never inverted.
+In the current unpublished source both layouts use a graduated tilt scale. It
+illustrates the configured visual mapping across the track, not a measured
+physical angle; service values are never inverted. Published beta 8 still uses
+a separate stacked-slats illustration in the detailed layout.
 Unknown values are labeled and cannot send slider commands. Actions require the
 entity's matching capability, an available service, and a connected Home Assistant.
 STOP independently invokes supported lift-stop and tilt-stop services and remains
@@ -113,7 +115,7 @@ only explicitly supplied fields. Names, entity IDs, and `expandable` do not inhe
 | `tilt_visual.mode`      | `single`                               | Preset: `single` or `bidirectional`              |
 | `tilt_visual.min_angle` | `-90`                                  | Minimum illustrative angle, from `-90` to `90`   |
 | `tilt_visual.max_angle` | `0` for single, `90` for bidirectional | Maximum angle; must exceed the minimum           |
-| `tilt_visual.invert`    | `false`                                | Reverse SVG mapping only                         |
+| `tilt_visual.invert`    | `false`                                | Reverse visual mapping only                      |
 | `show_buttons`          | `true`                                 | Show Open / Close; STOP remains                  |
 | `show_name`             | `true`                                 | Show the heading name                            |
 | `show_state`            | `true`                                 | Show the ordinary idle state                     |
@@ -151,7 +153,7 @@ blinds:
 ```
 
 In this example STOP remains everywhere; the right member also shows Open / Close.
-The two member maps differ, so their shared SVG is indeterminate even if their
+The two member maps differ, so their shared tilt scale is indeterminate even if their
 reported percentages match. Member previews use their own maps. Equal effective
 maps can share a preview even if their preset names differ. Mixed or unknown data
 still use ranges or uncertainty, without an averaged or invented angle.
@@ -191,7 +193,9 @@ are independent of the step size.
 
 ## Layouts
 
-The default `layout: detailed` preserves the existing tile layout. The optional
+The default `layout: detailed` uses the tile layout. In the current unpublished
+source it uses the same graduated sliders as inline; published beta 8 retains
+its earlier detailed controls. The optional
 `layout: inline` keeps both sliders, supported STOP and Open / Close controls
 in one row when space permits. On narrow cards the sliders move below the
 heading. The group arrow expands directly to members, whose layout inherits from
@@ -205,8 +209,8 @@ bar, without text covering the track. Settled successful results return the row
 to its ordinary state; full details remain available from the heading. In the
 beta 7, a tolerance result that later becomes historical is visible
 again. Pending responses, failures and unconfirmed results remain visible.
-The native slider gestures and default detailed layout are
-preserved, including RTL direction and release-only dispatch. Select the heading
+Native slider gestures, RTL direction and release-only dispatch are preserved.
+In the inline layout, select the heading
 to open the full detail; opening it cancels unfinished slider previews without
 sending them. Step settings do not round HA reports. Beta 7 has had initial
 owner-operated Overkiz checks; other integrations remain unverified.
@@ -250,7 +254,8 @@ distinguishes owner observations from local verification.
 ### Detailed tile layout
 
 The position and tilt controls sit side by side, switching to a single column
-in a narrow card. Small stacked slats sit beside the tilt value. Expanded members
+in a narrow card. The current local version uses graduated tilt and filled
+position tracks in this layout. Expanded members
 use a separate background, and supported STOP remains available with Open / Close
 hidden. This layout uses the existing configuration options.
 
@@ -401,7 +406,7 @@ scenarios; the downloaded public JS matched the independently reviewed artifact.
 | Individual/group motor control                                                 | Owner-operated Overkiz checks on earlier functional builds covered position, tilt, STOP, independent/shared commands and different member results.                                                                                                                                                                               |
 | Released detailed layout and steps                                             | Independent code reviews and mock browser regressions; owner-operated passive HA checks covered loading/reload, expansion, both themes, editor changes, defaults, YAML key removal and save/reopen without observed movement. New steps have not been physically exercised.                                                      |
 | Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                                                                                   |
-| Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                                                                                |
+| Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. Visual bidirectional mapping does not establish motor compatibility.                                                                                                                                             |
 | Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                                                                           |
 | Release artifact                                                               | Public beta 1, 3 and 4 JS assets matched their reviewed builds byte for byte. The beta 5 bundle matches the reviewed implementation except for its version header and includes complete licenses. Compare a downloaded beta 5 asset with the SHA256 in its release notes.                                                        |
 | HACS                                                                           | Owner confirmed beta 1 installation, then updating to beta 2 with one resource and passive loading/menu/expansion without errors or observed movement on HACS 2.0.5 / frontend 20250128065759. Earlier beta 1 checks included the editor. HA server-file hash, actual rollback and minimum supported versions remain unverified. |
