@@ -27,7 +27,14 @@ import {
   type TiltVisual,
   tiltRotation,
 } from "./model.ts";
-import { barPresentation, compactProgress } from "./presentation.ts";
+import {
+  barPresentation,
+  compactProgress,
+  failedResult,
+  lamellaWidth,
+  quietResult,
+  routineProgress,
+} from "./presentation.ts";
 import {
   type ProgressStatus,
   progressLabels,
@@ -338,9 +345,6 @@ export class AdvancedBlindCard extends LitElement {
       controller instanceof GroupController ? controller : undefined;
     const revision = controller.revision;
     const generation = this.generation;
-    const hasProgress = (["position", "tilt"] as const).some(
-      (axis) => this.axisStatuses(view, axis).length > 0,
-    );
     const entity =
       controller instanceof CoverController
         ? entityFor(controller.snapshot)
@@ -356,7 +360,7 @@ export class AdvancedBlindCard extends LitElement {
     const heading = html`<span class="icon" aria-hidden="true">▤</span><div class="heading-text">
         ${view.settings.showName ? html`<h2>${this.nameFor(view)}</h2>` : nothing}
         <div class="metadata">
-        ${(view.settings.showState && !(inline && hasProgress && this.healthyIdle(view))) || !this.healthyIdle(view) ? html`<p class="state entity-state" role="status">${state}</p>` : nothing}
+        ${view.settings.showState || !this.healthyIdle(view) ? html`<p class="state entity-state" role="status">${state}</p>` : nothing}
         ${group && (!inline || (!view.settings.showState && this.healthyIdle(view))) ? html`<p class="state">${this.t("covers", { count: view.members.length })}</p>` : nothing}
         </div>
         ${inline ? this.compactStatus(view) : nothing}
@@ -672,19 +676,21 @@ export class AdvancedBlindCard extends LitElement {
       const status = controller.progress.status(axis);
       return status ? [status] : [];
     }
-    return [
-      ...(controller
-        .progressFor(axis)
-        ?.members.map((member) => member.status) ?? []),
-      ...controller.individualProgressFor(axis).map((member) => member.status),
-    ];
+    const group = controller.progressFor(axis);
+    return controller.members.flatMap((member) => {
+      const status =
+        member.progress.status(axis) ??
+        group?.members.find((entry) => entry.entity === member.config?.entity)
+          ?.status;
+      return status ? [status] : [];
+    });
   }
   private compactStatus(view: View) {
     const controller = view.controller;
     const activeAxes = (["position", "tilt"] as const).filter(
       (axis) =>
-        this.axisStatuses(view, axis).length > 0 ||
-        controller.reason(axis, this.hass?.language),
+        this.axisStatuses(view, axis).some((status) => !quietResult(status)) ||
+        this.visibleReason(view, axis),
     );
     return html`<span class="compact-status">
       ${(["position", "tilt"] as const).map((axis) => {
@@ -698,10 +704,19 @@ export class AdvancedBlindCard extends LitElement {
             : this.axisStatuses(view, axis);
         const counts = new Map<string, number>();
         for (const status of statuses) {
-          const label = `${progressSymbol(status)} ${compactProgress(status, this.hass?.language)}`;
+          if (
+            quietResult(status) ||
+            routineProgress(status) ||
+            status.code === "replaced"
+          )
+            continue;
+          const visible = failedResult(status)
+            ? { ...status, code: "failed" as const }
+            : status;
+          const label = `${progressSymbol(visible)} ${compactProgress(visible, this.hass?.language)}`;
           counts.set(label, (counts.get(label) ?? 0) + 1);
         }
-        const reason = controller.reason(axis, this.hass?.language);
+        const reason = this.visibleReason(view, axis);
         const extra =
           controller instanceof GroupController &&
           this.report(view, axis) !== this.report(view, axis, true)
@@ -709,17 +724,21 @@ export class AdvancedBlindCard extends LitElement {
             : "";
         const individual =
           controller instanceof GroupController
-            ? controller.individualProgressFor(axis)
+            ? controller
+                .individualProgressFor(axis)
+                .filter((member) => !quietResult(member.status))
             : [];
-        const targets = individual
-          .map((member) => {
-            const child = view.members.find(
-              (child) =>
-                child.controller instanceof CoverController &&
-                child.controller.config?.entity === member.entity,
-            );
-            return `${child ? this.nameFor(child) : member.entity}: ${progressSymbol(member.status)} ${compactProgress(member.status, this.hass?.language)} · ${member.status.historical ? this.t("earlierTarget") : this.t("target")} ${member.status.target}%`;
-          })
+        const individualCounts = new Map<string, number>();
+        for (const member of individual) {
+          const status = failedResult(member.status)
+            ? { ...member.status, code: "failed" as const }
+            : member.status;
+          const ordinary = routineProgress(status);
+          const label = `${status.pending && ordinary ? "◷" : progressSymbol(status)} ${ordinary ? "" : `${compactProgress(status, this.hass?.language)} · `}→ ${status.target}%`;
+          individualCounts.set(label, (individualCounts.get(label) ?? 0) + 1);
+        }
+        const targets = [...individualCounts]
+          .map(([label, count]) => `${count}/${view.members.length} ${label}`)
           .join(" · ");
         const messages = [
           reason,
@@ -727,6 +746,9 @@ export class AdvancedBlindCard extends LitElement {
           groupGoal?.target !== undefined &&
           statuses.some((status) =>
             ["skipped", "replaced"].includes(status.code),
+          ) &&
+          statuses.some(
+            (status) => status.code !== "replaced" && !quietResult(status),
           )
             ? `${progressLabels(this.hass?.language).groupTarget}: ${groupGoal.target}%`
             : "",
@@ -740,8 +762,15 @@ export class AdvancedBlindCard extends LitElement {
           ? html`<span class="compact-axis" role="status" aria-live="polite"><span class=${activeAxes.length === 1 ? "sr-only" : nothing}>${this.t(axis === "position" ? "position" : "shortTilt")}: </span>${messages.join(" · ")}</span>`
           : nothing;
       })}
-      ${!this.visualFor(view) ? html`<span class="compact-axis">? ${this.t("differentMaps")}</span>` : nothing}
+      ${!this.visualFor(view) ? html`<span class="compact-axis" title=${this.t("differentMaps")}>? ${this.t("mixedVisual")}</span>` : nothing}
     </span>`;
+  }
+  private visibleReason(view: View, axis: Axis) {
+    return ["waiting", "groupWaiting"].includes(
+      view.controller.reasonKey(axis) ?? "",
+    )
+      ? null
+      : view.controller.reason(axis, this.hass?.language);
   }
   private controlDetails(view: View) {
     const controller = view.controller;
@@ -850,10 +879,76 @@ export class AdvancedBlindCard extends LitElement {
       inputRevision === view.inputRevision &&
       (event.currentTarget as HTMLElement).isConnected;
     const inline = view.settings.layout === "inline";
-    const input = html`<input id=${id} type="range" min="0" max="100" step=${step} class=${!chosen && reported === null ? "unknown" : nothing}
+    const members =
+      controller instanceof GroupController ? controller.members : [controller];
+    const values = members.map((member) => {
+      const entity = entityFor(member.snapshot);
+      return member.hass?.connected &&
+        entity &&
+        ["open", "closed", "opening", "closing"].includes(entity.state)
+        ? member.reported(axis)
+        : null;
+    });
+    const statuses = this.axisStatuses(view, axis);
+    const bar = barPresentation(
+      values,
+      statuses,
+      draft ? (value ?? undefined) : undefined,
+    );
+    const attention = statuses.filter((status) => !quietResult(status));
+    const status =
+      attention.find(failedResult) ??
+      attention.find((status) =>
+        [
+          "unconfirmed",
+          "unknown",
+          "unavailable",
+          "unsupported",
+          "interrupted",
+          "skipped",
+        ].includes(status.code),
+      ) ??
+      attention.find((status) => status.pending) ??
+      attention.find((status) => status.code === "moving") ??
+      attention[0];
+    const visibleStatus =
+      status && failedResult(status)
+        ? { ...status, code: "failed" as const }
+        : status;
+    const indicator = draft
+      ? "◇"
+      : bar.uncertain || mapReason
+        ? "?"
+        : visibleStatus?.pending && routineProgress(visibleStatus)
+          ? "◷"
+          : visibleStatus
+            ? progressSymbol(visibleStatus)
+            : bar.min !== bar.max
+              ? "↔"
+              : "";
+    const indicatorText = draft
+      ? this.t("preview")
+      : mapReason ||
+        (bar.uncertain
+          ? this.t("unknown")
+          : visibleStatus
+            ? progressText(visibleStatus, this.hass?.language)
+            : this.t("mixedReadings"));
+    const targetForAria = inline
+      ? bar.target
+      : chosen
+        ? (value ?? undefined)
+        : undefined;
+    const inputClass = [
+      !chosen && reported === null ? "unknown" : "",
+      inline && draft ? "range-editing" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const input = html`<input id=${id} type="range" min="0" max="100" step=${step} class=${inputClass || nothing}
         .value=${untouchedKeyboard ? noChange : live(String(value ?? 0))} ?disabled=${reason !== null}
         aria-label=${this.views.length === 1 && !group && !view.parent ? label : `${this.nameFor(view)} ${group ? this.t("targetAxis", { axis: label }) : label}`}
-        aria-valuetext=${group || chosen ? `${chosen ? `${this.t("target")} ${this.t("percent", { value: value ?? 0 })}${draft ? ` ${this.t("preview")}` : ""}` : this.t("noTarget")}. ${this.t("reported")}: ${report}` : value === null ? this.t("unknown") : this.t("percent", { value })}
+        aria-valuetext=${group || chosen || targetForAria !== undefined ? `${targetForAria !== undefined ? `${this.t("target")} ${this.t("percent", { value: targetForAria })}${draft ? ` ${this.t("preview")}` : ""}` : this.t("noTarget")}. ${this.t("reported")}: ${report}` : value === null ? this.t("unknown") : this.t("percent", { value })}
         aria-describedby=${`${id}-description ${id}-progress ${view.id}-instruction${mapReason ? ` ${id}-visual` : ""}`}
         @pointerdown=${(event: PointerEvent) => {
           if (!current(event) || event.button !== 0 || !event.isPrimary) return;
@@ -951,35 +1046,25 @@ export class AdvancedBlindCard extends LitElement {
             else void controller.finish(axis, "keyboard");
           }
         }} />`;
-    const members = group ? group.members : [controller as CoverController];
-    const values = members.map((member) => {
-      const entity = entityFor(member.snapshot);
-      return member.hass?.connected &&
-        entity &&
-        ["open", "closed", "opening", "closing"].includes(entity.state)
-        ? member.reported(axis)
-        : null;
-    });
-    const bar = barPresentation(
-      values,
-      this.axisStatuses(view, axis),
-      draft ? (value ?? undefined) : undefined,
-    );
     const targetPosition =
       bar.target === undefined ? 0 : Math.min(100, Math.max(0, bar.target));
+    const reportWidth = bar.target === undefined ? 8 : 2;
+    const angleUnknown = axis === "tilt" && (!visual || bar.uncertain);
+    const lowWidth = visual ? lamellaWidth(bar.min, visual) : null;
+    const highWidth = visual ? lamellaWidth(bar.max, visual) : null;
     return html`<section class="slider" aria-label=${label}>
-      <div class="slider-label"><label for=${id}>${visibleLabel}${group ? html`<span class=${`target-label${inline ? " sr-only" : ""}`}>${this.t("target")}</span>` : nothing}</label><div class="slider-values">${axis === "tilt" ? this.slats(inline || (group && !chosen) ? reported : value, visual ?? defaultTiltVisual, mapReason) : nothing}${revealValues ? html`<output aria-live="off" for=${id} title=${inline ? `${this.t("reported")}: ${report}` : nothing}>${inline ? this.report(view, axis, true) : displayValue}</output>` : nothing}</div></div>
+      <div class="slider-label"><label for=${id}>${visibleLabel}${group ? html`<span class=${`target-label${inline ? " sr-only" : ""}`}>${this.t("target")}</span>` : nothing}</label>${inline && indicator ? html`<span class="axis-phase" data-code=${visibleStatus?.code ?? (draft ? "preview" : "mixed")} data-tone=${bar.tone} role="status" aria-label=${indicatorText} title=${indicatorText}>${indicator}</span>` : nothing}<div class="slider-values">${axis === "tilt" && !inline ? this.slats(group && !chosen ? reported : value, visual ?? defaultTiltVisual, mapReason) : nothing}${revealValues ? html`<output aria-live="off" for=${id} title=${inline ? `${this.t("reported")}: ${report}` : nothing}>${inline ? this.report(view, axis, true) : displayValue}</output>` : nothing}${inline && bar.target !== undefined ? html`<span class="inline-target" aria-label=${`${this.t(draft ? "preview" : "target")}: ${bar.target}%`}>→ ${bar.target}%</span>` : nothing}</div></div>
       ${
         inline
-          ? html`<div class="range-control" data-tone=${bar.tone} data-uncertain=${String(bar.uncertain)}>
+          ? html`<div class="range-control" data-axis=${axis} data-tone=${bar.tone} data-uncertain=${String(bar.uncertain)} data-angle-unknown=${String(angleUnknown)} data-active=${String(bar.target !== undefined)}>
         <div class="range-track" aria-hidden="true">
           <span class="range-fill" style=${`width:${bar.min}%`}></span>
           <span class="range-mixed" style=${`inset-inline-start:${bar.min}%;width:${bar.max - bar.min}%`}></span>
-          ${values.some((value) => value !== null) && bar.min === bar.max ? html`<span class="range-report" style=${`inset-inline-start:clamp(0px, calc(${bar.min}% - 2px), calc(100% - 4px))`}></span>` : nothing}
-          ${bar.target !== undefined ? html`<span class="range-route" style=${`inset-inline-start:${Math.min(bar.min, targetPosition)}%;width:${Math.max(bar.max, targetPosition) - Math.min(bar.min, targetPosition)}%`}></span><span class="range-target" style=${`inset-inline-start:clamp(0px, calc(${targetPosition}% - 1px), calc(100% - 2px))`}></span>` : nothing}
+          ${axis === "tilt" && !angleUnknown ? html`<span class="range-lamella" style=${`inset-inline-start:0;width:${bar.min === bar.max ? 100 : 50}%;--slat-width:${lowWidth}px`}></span>${bar.min !== bar.max ? html`<span class="range-lamella" style=${`inset-inline-end:0;width:50%;--slat-width:${highWidth}px`}></span>` : nothing}` : nothing}
+          ${!bar.uncertain && bar.min === bar.max ? html`<span class="range-report" style=${`width:${reportWidth}px;inset-inline-start:clamp(0px, calc(${bar.min}% - ${reportWidth / 2}px), calc(100% - ${reportWidth}px))`}></span>` : nothing}
+          ${bar.target !== undefined && !draft ? html`<span class="range-target" style=${`inset-inline-start:clamp(0px, calc(${targetPosition}% - 4px), calc(100% - 8px))`}></span>` : nothing}
         </div>
         ${input}
-        ${bar.target !== undefined ? html`<span class="target-chip" style=${`inset-inline-start:clamp(0px, calc(${targetPosition}% - 23px), calc(100% - 46px))`} aria-hidden="true">${draft ? "◇" : "→"} ${bar.target}%</span>` : nothing}
       </div>`
           : input
       }
@@ -1140,6 +1225,10 @@ export class AdvancedBlindCard extends LitElement {
       controller.requested?.axis === axis
     )
       return true;
+    if (view.settings.layout === "inline")
+      return this.axisStatuses(view, axis).some(
+        (status) => !quietResult(status),
+      );
     const unresolved = (status: ProgressStatus | undefined) =>
       status !== undefined &&
       (status.pending ||
@@ -1311,31 +1400,36 @@ export class AdvancedBlindCard extends LitElement {
     .inline-grid .state { font-size:12px; line-height:16px; }
     .inline-grid .sliders { min-width:0; gap:0 8px; grid-template-rows:none; grid-auto-rows:auto; }
     .inline-grid .slider { display:flex; }
-    .inline-grid .slider-label { min-height:16px; align-items:center; gap:3px; }
+    .inline-grid .slider-label { display:flex; flex-wrap:wrap; min-height:16px; align-items:center; gap:0 3px; }
     .inline-grid .slider-label label { font-size:11px; line-height:16px; }
-    .inline-grid .slider-values { gap:3px; }
+    .inline-grid .slider-values { gap:3px; margin-inline-start:auto; }
     .inline-grid output { font-size:11px; line-height:16px; }
-    .inline-grid .slats { width:15px; height:16px; }
+    .inline-target { font-size:11px; line-height:16px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .axis-phase { font-size:11px; line-height:16px; color:var(--primary-color, #03a9f4); }
+    .axis-phase[data-tone="caution"] { color:var(--warning-color, #a56800); }
+    .axis-phase[data-tone="error"] { color:var(--error-color, #db4437); }
     .range-control { position:relative; height:44px; min-width:0; --range-color:var(--primary-color, #03a9f4); }
     .range-control[data-tone="caution"] { --range-color:var(--warning-color, #a56800); }
     .range-control[data-tone="error"] { --range-color:var(--error-color, #db4437); }
-    .range-control[data-tone="reached"] { --range-color:var(--success-color, #238636); }
     .range-track { position:absolute; inset:8px 0; border-radius:9px; overflow:hidden; background:var(--secondary-background-color, #e5e7eb); box-shadow:inset 0 0 0 1px var(--divider-color, #ccc); pointer-events:none; }
-    .range-fill, .range-mixed, .range-route { position:absolute; top:0; bottom:0; pointer-events:none; }
+    .range-track::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; }
+    .range-control[data-active="true"] .range-track::after { background:color-mix(in srgb, var(--range-color) 13%, transparent); }
+    .range-fill, .range-mixed { position:absolute; top:0; bottom:0; pointer-events:none; }
     .range-fill { inset-inline-start:0; background:var(--range-color); opacity:.75; }
     .range-mixed { background:repeating-linear-gradient(120deg, var(--range-color) 0 2px, transparent 2px 5px); opacity:.75; }
-    .range-route { background:repeating-linear-gradient(120deg, var(--range-color) 0 1px, transparent 1px 6px); opacity:.4; }
-    .range-target { position:absolute; top:2px; bottom:2px; width:2px; background:#fff; box-shadow:0 0 0 1px #333; }
-    .range-report { position:absolute; top:0; bottom:0; width:4px; background:#fff; box-shadow:0 0 0 1px #333; border-radius:2px; }
-    .range-control[data-uncertain="true"] .range-track { background:repeating-linear-gradient(120deg, var(--secondary-background-color, #e5e7eb) 0 4px, var(--divider-color, #ccc) 4px 5px); }
+    .range-lamella { position:absolute; top:0; bottom:0; background:repeating-linear-gradient(90deg, color-mix(in srgb, var(--primary-text-color, #212121) 30%, var(--secondary-background-color, #e5e7eb)) 0 var(--slat-width), transparent var(--slat-width) 8px); }
+    .range-control[data-axis="tilt"] .range-fill, .range-control[data-axis="tilt"] .range-mixed { display:none; }
+    .range-target, .range-report { position:absolute; z-index:2; top:0; bottom:0; box-sizing:border-box; border-radius:8px; border:1px solid #41454a; background:linear-gradient(90deg, #fff 0 2px, #41454a 2px 4px, #fff 4px); }
+    .range-target { width:8px; }
+    .range-control[data-active="true"] .range-report { border:0; border-radius:1px; background:var(--primary-text-color, #212121); opacity:.7; }
+    .range-control[data-uncertain="true"] .range-track, .range-control[data-angle-unknown="true"] .range-track { background:repeating-linear-gradient(120deg, var(--secondary-background-color, #e5e7eb) 0 4px, var(--divider-color, #ccc) 4px 5px); }
     .range-control input { position:relative; z-index:4; appearance:none; -webkit-appearance:none; background:transparent; border:0; border-radius:9px; }
     .range-control input::-webkit-slider-runnable-track { height:28px; background:transparent; border:0; }
-    .range-control input::-webkit-slider-thumb { appearance:none; -webkit-appearance:none; height:28px; width:4px; border:0; border-radius:2px; background:var(--primary-text-color, #212121); }
+    .range-control input::-webkit-slider-thumb { appearance:none; -webkit-appearance:none; height:28px; width:8px; box-sizing:border-box; border:1px solid #41454a; border-radius:8px; background:linear-gradient(90deg, #fff 0 2px, #41454a 2px 4px, #fff 4px); }
     .range-control input::-moz-range-track { height:28px; background:transparent; border:0; }
-    .range-control input::-moz-range-thumb { height:28px; width:4px; border:0; border-radius:2px; background:var(--primary-text-color, #212121); }
-    .range-control input:not(:focus):not(:active)::-webkit-slider-thumb { visibility:hidden; }
-    .range-control input:not(:focus):not(:active)::-moz-range-thumb { visibility:hidden; }
-    .target-chip { position:absolute; z-index:5; top:12px; width:46px; max-width:100%; box-sizing:border-box; text-align:center; padding:0 2px; border-radius:4px; background:var(--ha-card-background, #fff); color:var(--primary-text-color, #212121); font-size:10px; font-weight:600; line-height:20px; pointer-events:none; white-space:nowrap; }
+    .range-control input::-moz-range-thumb { height:28px; width:8px; box-sizing:border-box; border:1px solid #41454a; border-radius:8px; background:#fff; }
+    .range-control input:not(.range-editing)::-webkit-slider-thumb { visibility:hidden; }
+    .range-control input:not(.range-editing)::-moz-range-thumb { visibility:hidden; }
     .inline-actions { display:flex; gap:6px; align-items:center; }
     .inline-actions button { flex:none; width:44px; min-width:44px; min-height:44px; padding:0; margin:0; border:0;
       background:var(--secondary-background-color, #f5f7f9); }

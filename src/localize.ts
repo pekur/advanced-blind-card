@@ -1,6 +1,8 @@
 const en = {
   progressDetails: "Progress details (reported values and targets)",
   earlierTarget: "Earlier target",
+  mixedVisual: "Different visual mappings",
+  mixedReadings: "Different reported member values",
   layout: "Layout",
   detailed: "Detailed",
   inline: "Inline / row",
@@ -117,6 +119,8 @@ const en = {
 const cs: Record<keyof typeof en, string> = {
   progressDetails: "Podrobnosti průběhu (hlášené hodnoty a cíle)",
   earlierTarget: "Dřívější cíl",
+  mixedVisual: "Různé vizuální mapování",
+  mixedReadings: "Různé hlášené hodnoty členů",
   layout: "Rozložení",
   detailed: "Podrobné",
   inline: "Řádkové",

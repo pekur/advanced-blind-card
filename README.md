@@ -203,6 +203,17 @@ opening it cancels active slider previews without sending them. This presentatio
 has not yet been tested on real HA devices. The bars follow the native
 slider direction in both left-to-right and right-to-left interfaces.
 
+The **local development build** revises this presentation: reported tilt controls
+lamella widths and gaps inside the entire inline bar using the configured visual
+angle and inversion. Mixed groups show the two range endpoints; unknown readings
+or incompatible mappings do not invent a common angle. Targets appear above the
+bar, without text covering the track. Successful and historical results return
+the row to its ordinary state once the service response settles; the full result
+remains in the heading detail. Pending responses, failures and unconfirmed results
+remain visible. The native slider gestures and default detailed layout are
+preserved. These revisions are not part of published beta 4 and have not been
+verified on real HA devices.
+
 ```yaml
 type: custom:advanced-blind-card
 layout: inline

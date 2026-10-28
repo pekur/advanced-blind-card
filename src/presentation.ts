@@ -1,4 +1,5 @@
 import { languageCode } from "./localize.ts";
+import { type TiltVisual, tiltRotation } from "./model.ts";
 import type { ProgressCode, ProgressStatus } from "./progress.ts";
 
 const labels: Record<ProgressCode, [string, string]> = {
@@ -23,6 +24,41 @@ export function compactProgress(status: ProgressStatus, language?: string) {
   return `${status.historical ? (cs ? "Dříve: " : "Earlier: ") : ""}${labels[status.code][cs ? 0 : 1]}${status.pending && status.code !== "sending" ? (cs ? " · odpověď čeká" : " · response pending") : ""}`;
 }
 
+export function quietResult(status: ProgressStatus) {
+  return (
+    !status.pending &&
+    !status.reason &&
+    ["reached", "already"].includes(status.code)
+  );
+}
+
+export function failedResult(status: ProgressStatus) {
+  return (
+    status.code === "failed" ||
+    (!!status.reason && ["reached", "already"].includes(status.code))
+  );
+}
+
+export function routineProgress(status: ProgressStatus) {
+  return (
+    !failedResult(status) &&
+    (["sending", "waiting", "moving"].includes(status.code) ||
+      (!!status.pending && ["reached", "already"].includes(status.code)))
+  );
+}
+
+// Illustrative front-view width, using the same configured angle as the SVG.
+// It describes HA's report, never a preview or an estimated physical position.
+export function lamellaWidth(
+  value: number | null,
+  visual: TiltVisual,
+): number | null {
+  const rotation = tiltRotation(value, visual);
+  return rotation === null
+    ? null
+    : 8 * (0.16 + 0.76 * Math.min(1, Math.abs(rotation - 90) / 90));
+}
+
 // Presentation only: never infer physical completion or interpolate HA reports.
 export function barPresentation(
   values: readonly (number | null)[],
@@ -36,6 +72,7 @@ export function barPresentation(
   const common =
     statuses.length > 0 &&
     statuses.length === values.length &&
+    statuses.some((status) => !quietResult(status)) &&
     statuses.every(
       (status) =>
         !status.historical &&
@@ -44,23 +81,22 @@ export function barPresentation(
         status.target === statuses[0]?.target,
     );
   const target = preview ?? (common ? statuses[0]?.target : undefined);
-  const tone = statuses.some((status) => status.code === "failed")
+  const attention = statuses.filter((status) => !quietResult(status));
+  const tone = attention.some(failedResult)
     ? "error"
     : uncertain ||
-        (statuses.length > 0 &&
+        (attention.length > 0 &&
           (statuses.length !== values.length || min !== max)) ||
-        statuses.some(
+        attention.some(
           (status) =>
             status.historical ||
             status.pending ||
             !["moving", "reached", "already"].includes(status.code),
         )
       ? "caution"
-      : statuses.some((status) => status.code === "moving")
+      : attention.some((status) => status.code === "moving")
         ? "moving"
-        : statuses.length
-          ? "reached"
-          : "idle";
+        : "idle";
   return {
     min,
     max,
