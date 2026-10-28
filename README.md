@@ -6,9 +6,10 @@ Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
 **Experimental beta: [0.1.0-beta.5](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.5).**
-This version adds lamella textures inside inline tilt bars, targets above the
-bars and quiet settled results. The default remains `detailed`.
-Beta 5 has not been installed through HACS or tested in real HA.
+This repository also contains the local **0.1.0-beta.6 release candidate**. Its
+inline tilt slider has a graduated lamella scale and aligned target values;
+mixed or incomplete group readings remain visible. The default remains `detailed`.
+The beta 6 candidate has not yet been published or tested in real HA.
 See [verification and limits](#verification-and-limits) before using it with devices.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
@@ -309,8 +310,8 @@ The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
 `advanced-blind-card.js` asset. Add it as a custom repository; inclusion in the
 default HACS catalog is not claimed.
 Version **v0.1.0-beta.3** added responsive direct arrows. Version
-**v0.1.0-beta.5** adds lamella strips and quiet results; its HACS
-installation has not been verified.
+**v0.1.0-beta.5** adds lamella strips and quiet results. The beta 6 candidate
+is not yet available through HACS; continue to select an actual published tag.
 
 The version-selection procedure was confirmed for beta 1 with HACS **2.0.5** and
 frontend **20250128065759**. In that environment the initial default download

@@ -391,6 +391,28 @@ export class AdvancedBlindCard extends LitElement {
       `${view.id}-${revision}`,
       html`<section class=${`row${view.parent ? " child" : ""}${inline ? " inline" : ""}`} data-row=${view.id} data-layout=${view.settings.layout} aria-label=${this.nameFor(view)}>
       ${inline ? html`<div class="inline-grid">${inlineHeading}${sliders}<div class="inline-actions">${view.settings.showButtons ? html`<div class="inline-arrows">${this.button(view, "open", this.t("open"), "↑", false, true)}${this.button(view, "close", this.t("close"), "↓", false, true)}</div>${this.menuButton(view)}` : nothing}${this.stopButton(view)}${expand}</div></div>` : html`<div class="heading">${heading}${expand}</div>`}
+      ${
+        inline && group && view.settings.showValues
+          ? (["position", "tilt"] as const).map((axis) => {
+              const known = group.members
+                .map((member) => {
+                  const entity = entityFor(member.snapshot);
+                  return member.hass?.connected &&
+                    entity &&
+                    ["open", "closed", "opening", "closing"].includes(
+                      entity.state,
+                    )
+                    ? member.reported(axis)
+                    : null;
+                })
+                .filter((value): value is number => value !== null);
+              return known.length !== group.members.length ||
+                (known.length > 1 && Math.min(...known) !== Math.max(...known))
+                ? html`<p class="inline-mixed-report">${this.t(axis === "position" ? "position" : "shortTilt")}: ${this.report(view, axis)}</p>`
+                : nothing;
+            })
+          : nothing
+      }
       ${inline ? html`<div id=${`${view.id}-details`} ?hidden=${!view.detailsOpen}>${details}${transport}</div>` : details}
       ${
         inline
@@ -1050,8 +1072,6 @@ export class AdvancedBlindCard extends LitElement {
       bar.target === undefined ? 0 : Math.min(100, Math.max(0, bar.target));
     const reportWidth = bar.target === undefined ? 8 : 2;
     const angleUnknown = axis === "tilt" && (!visual || bar.uncertain);
-    const lowWidth = visual ? lamellaWidth(bar.min, visual) : null;
-    const highWidth = visual ? lamellaWidth(bar.max, visual) : null;
     return html`<section class="slider" aria-label=${label}>
       <div class="slider-label"><label for=${id}>${visibleLabel}${group ? html`<span class=${`target-label${inline ? " sr-only" : ""}`}>${this.t("target")}</span>` : nothing}</label>${inline && indicator ? html`<span class="axis-phase" data-code=${visibleStatus?.code ?? (draft ? "preview" : "mixed")} data-tone=${bar.tone} role="status" aria-label=${indicatorText} title=${indicatorText}>${indicator}</span>` : nothing}<div class="slider-values">${axis === "tilt" && !inline ? this.slats(group && !chosen ? reported : value, visual ?? defaultTiltVisual, mapReason) : nothing}${revealValues ? html`<output aria-live="off" for=${id} title=${inline ? `${this.t("reported")}: ${report}` : nothing}>${inline ? this.report(view, axis, true) : displayValue}</output>` : nothing}${inline && bar.target !== undefined ? html`<span class="inline-target" aria-label=${`${this.t(draft ? "preview" : "target")}: ${bar.target}%`}>→ ${bar.target}%</span>` : nothing}</div></div>
       ${
@@ -1060,7 +1080,7 @@ export class AdvancedBlindCard extends LitElement {
         <div class="range-track" aria-hidden="true">
           <span class="range-fill" style=${`width:${bar.min}%`}></span>
           <span class="range-mixed" style=${`inset-inline-start:${bar.min}%;width:${bar.max - bar.min}%`}></span>
-          ${axis === "tilt" && !angleUnknown ? html`<span class="range-lamella" style=${`inset-inline-start:0;width:${bar.min === bar.max ? 100 : 50}%;--slat-width:${lowWidth}px`}></span>${bar.min !== bar.max ? html`<span class="range-lamella" style=${`inset-inline-end:0;width:50%;--slat-width:${highWidth}px`}></span>` : nothing}` : nothing}
+          ${axis === "tilt" && !angleUnknown && visual ? html`<span class="range-lamella">${Array.from({ length: 20 }, (_, i) => html`<span style=${`--slat-size:${((lamellaWidth((i / 19) * 100, visual) ?? 0) / 8) * 100}%`}></span>`)}</span>` : nothing}
           ${!bar.uncertain && bar.min === bar.max ? html`<span class="range-report" style=${`width:${reportWidth}px;inset-inline-start:clamp(0px, calc(${bar.min}% - ${reportWidth / 2}px), calc(100% - ${reportWidth}px))`}></span>` : nothing}
           ${bar.target !== undefined && !draft ? html`<span class="range-target" style=${`inset-inline-start:clamp(0px, calc(${targetPosition}% - 4px), calc(100% - 8px))`}></span>` : nothing}
         </div>
@@ -1400,10 +1420,12 @@ export class AdvancedBlindCard extends LitElement {
     .inline-grid .state { font-size:12px; line-height:16px; }
     .inline-grid .sliders { min-width:0; gap:0 8px; grid-template-rows:none; grid-auto-rows:auto; }
     .inline-grid .slider { display:flex; }
-    .inline-grid .slider-label { display:flex; flex-wrap:wrap; min-height:16px; align-items:center; gap:0 3px; }
-    .inline-grid .slider-label label { font-size:11px; line-height:16px; }
-    .inline-grid .slider-values { gap:3px; margin-inline-start:auto; }
-    .inline-grid output { font-size:11px; line-height:16px; }
+    .inline-mixed-report { color:var(--secondary-text-color, #666); font-size:11px; line-height:16px; overflow-wrap:anywhere; }
+    .inline-grid .slider-label { display:flex; flex-wrap:nowrap; min-height:16px; align-items:center; gap:0 3px; }
+    .inline-grid .slider-label label { font-size:11px; line-height:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .inline-grid .slider-label:has(.inline-target) label { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    .inline-grid .slider-values { gap:2px; margin-inline-start:auto; min-width:0; overflow:hidden; }
+    .inline-grid output { font-size:11px; line-height:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .inline-target { font-size:11px; line-height:16px; white-space:nowrap; font-variant-numeric:tabular-nums; }
     .axis-phase { font-size:11px; line-height:16px; color:var(--primary-color, #03a9f4); }
     .axis-phase[data-tone="caution"] { color:var(--warning-color, #a56800); }
@@ -1417,8 +1439,11 @@ export class AdvancedBlindCard extends LitElement {
     .range-fill, .range-mixed { position:absolute; top:0; bottom:0; pointer-events:none; }
     .range-fill { inset-inline-start:0; background:var(--range-color); opacity:.75; }
     .range-mixed { background:repeating-linear-gradient(120deg, var(--range-color) 0 2px, transparent 2px 5px); opacity:.75; }
-    .range-lamella { position:absolute; top:0; bottom:0; background:repeating-linear-gradient(90deg, color-mix(in srgb, var(--primary-text-color, #212121) 30%, var(--secondary-background-color, #e5e7eb)) 0 var(--slat-width), transparent var(--slat-width) 8px); }
-    .range-control[data-axis="tilt"] .range-fill, .range-control[data-axis="tilt"] .range-mixed { display:none; }
+    .range-lamella { position:absolute; inset:0; display:flex; }
+    .range-lamella > span { flex:1 1 0; position:relative; }
+    .range-lamella > span::before { content:""; position:absolute; inset-block:0; inset-inline-start:0; width:var(--slat-size, 100%); background:color-mix(in srgb, var(--primary-text-color, #212121) 16%, var(--secondary-background-color, #e5e7eb)); }
+    .range-control[data-axis="tilt"] .range-fill { display:none; }
+    .range-control[data-axis="tilt"] .range-mixed { z-index:1; opacity:.45; }
     .range-target, .range-report { position:absolute; z-index:2; top:0; bottom:0; box-sizing:border-box; border-radius:8px; border:1px solid #41454a; background:linear-gradient(90deg, #fff 0 2px, #41454a 2px 4px, #fff 4px); }
     .range-target { width:8px; }
     .range-control[data-active="true"] .range-report { border:0; border-radius:1px; background:var(--primary-text-color, #212121); opacity:.7; }
