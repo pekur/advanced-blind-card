@@ -377,8 +377,11 @@ test. Beta 5 has only local tests and no real-device verification.
 For beta 7, the owner reported a successful passive load and group expansion.
 In supervised Overkiz checks, a bedroom tilt target of 10% was reported as 9%
 and its waiting highlight cleared without an error; a position target of 10%
-was reported as exactly 10%. A group tilt target of 90% was reported as 91% by
-both members and the waiting highlight cleared. These are owner observations,
+was reported as exactly 10%, as was a later position target of 20%. A group tilt
+target of 90% was reported as 91% by both members and the waiting highlight
+cleared. In a subsequent test, the card showed a mixed starting tilt of 10% and
+0%, then 21% for both members after a common target of 20%; the owner reported
+the behavior was as expected. These are owner observations and screenshots,
 not a server-file hash or a measured two-second timing. Position tolerance,
 different group member results and STOP in beta 7 remain unverified on devices.
 The local beta 7 candidate passed build, Biome, 153 Node tests and 199 simulated
