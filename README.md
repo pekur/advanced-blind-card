@@ -5,10 +5,10 @@ sliders, small stacked slats, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Experimental beta: [0.1.0-beta.4](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.4).**
-This version adds filled inline sliders with separate HA readings and targets,
-compact progress states and a user-opened detail. The default remains `detailed`.
-Beta 4 has not been installed through HACS or tested in real HA.
+**Experimental candidate: 0.1.0-beta.5 — not yet published.**
+This candidate adds lamella textures inside inline tilt bars, targets above the
+bars and quiet settled results. The default remains `detailed`.
+Beta 5 has not been installed through HACS or tested in real HA.
 See [verification and limits](#verification-and-limits) before using it with devices.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
@@ -192,18 +192,7 @@ in one row when space permits. On narrow cards the sliders move below the
 heading. The group arrow expands directly to members, whose layout inherits from
 the group unless explicitly overridden.
 
-Beta 4 uses filled inline sliders: the value above each bar
-and its solid fill are HA reports, never an animated estimate. Hatched ranges show
-different member readings. A separate white tick and arrow badge mark the target;
-the diamond badge marks an unsent preview. Step settings do not round HA reports.
-Color is accompanied by text and symbols in the heading (waiting, movement reported
-by HA, near but unconfirmed, or a reported target). Errors, partial results and STOP
-uncertainty remain visible. Select the row heading to open the full progress detail;
-opening it cancels active slider previews without sending them. This presentation
-has not yet been tested on real HA devices. The bars follow the native
-slider direction in both left-to-right and right-to-left interfaces.
-
-The **local development build** revises this presentation: reported tilt controls
+The **beta 5 candidate** uses filled inline position bars; reported tilt controls
 lamella widths and gaps inside the entire inline bar using the configured visual
 angle and inversion. Mixed groups show the two range endpoints; unknown readings
 or incompatible mappings do not invent a common angle. Targets appear above the
@@ -211,8 +200,10 @@ bar, without text covering the track. Successful and historical results return
 the row to its ordinary state once the service response settles; the full result
 remains in the heading detail. Pending responses, failures and unconfirmed results
 remain visible. The native slider gestures and default detailed layout are
-preserved. These revisions are not part of published beta 4 and have not been
-verified on real HA devices.
+preserved, including RTL direction and release-only dispatch. Select the heading
+to open the full detail; opening it cancels unfinished slider previews without
+sending them. Step settings do not round HA reports. These revisions are not part
+of published beta 4 and have not been verified on real HA devices.
 
 ```yaml
 type: custom:advanced-blind-card
@@ -246,7 +237,7 @@ targets can increase the height. Important readings and results remain visible;
 ordinary idle gesture instructions stay available to assistive technology.
 The owner confirmed passive use of the earlier inline layout and supplied HA
 screenshots of responsive arrows. The owner also independently reported working
-arrows and STOP. These observations do not verify beta 4; the evidence below
+arrows and STOP. These observations do not verify beta 5; the evidence below
 distinguishes owner observations from local verification.
 
 ### Detailed tile layout
@@ -293,16 +284,20 @@ updates never send motor commands.
 
 ## Installation and updates
 
+Beta 5 is a local candidate. Its release/HACS instructions below apply only after
+publication. [Published beta 4](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.4)
+remains available.
+
 For a manual installation, [build the card](#development) from source or
 download `advanced-blind-card.js` from the
-[beta 4 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.4).
+[beta 5 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.5).
 Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0-beta.4
+/local/advanced-blind-card.js?v=0.1.0-beta.5
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -318,7 +313,7 @@ The first release, **v0.1.0-beta.1**, is an experimental prerelease with one
 `advanced-blind-card.js` asset. Add it as a custom repository; inclusion in the
 default HACS catalog is not claimed.
 Version **v0.1.0-beta.3** added responsive direct arrows. Version
-**v0.1.0-beta.4** adds filled sliders and compact progress; its HACS
+**v0.1.0-beta.5** candidate adds lamella strips and quiet results; its HACS
 installation has not been verified.
 
 The version-selection procedure was confirmed for beta 1 with HACS **2.0.5** and
@@ -331,7 +326,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.4**. Check that the download dialog names this tag rather than a
+   **v0.1.0-beta.5**, once published. Check that the download dialog names this tag rather than a
    commit. If this beta is not offered, check the release and any HACS error;
    do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL
@@ -349,8 +344,8 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 
 If migrating from a manual installation and loading fails, disable the HACS
 resource, restore the saved manual resource, and reload. Keep only one active
-resource. A beta 1 → beta 2 update was owner-confirmed; the beta 4 update and actual
-rollback remain unverified. Beta 4 adds no configuration keys; returning to beta 3
+resource. A beta 1 → beta 2 update was owner-confirmed; the beta 5 update and actual
+rollback remain unverified. Beta 5 adds no configuration keys; returning to beta 4
 needs no YAML changes. When returning from a build with `layout` to beta 1,
 restore the saved beta 1 YAML first: remove `layout` at card, row and member level, because beta 1
 rejects this option. Keep the existing single resource when changing HACS versions.
@@ -362,20 +357,21 @@ The version selector is also visible in the
 
 ## Verification and limits
 
-Version **0.1.0-beta.4** passed check/build, 142 Node tests and
-257 mock-browser scenarios (20 filled sliders, 16 RTL, 20 arrows, 35 inline,
-164 regressions and two previous review regressions) in Edge. Independent review
-found one RTL presentation defect: the filled bar and target were mirrored
-relative to the native slider. It was fixed and independently verified with all
-16 RTL cases. The beta 4 rebuild differs from that reviewed and committed
+The reviewed lamella implementation passed check/build, 146 Node tests and
+266 mock-browser scenarios (21 lamella, 16 RTL, 20 arrows, 35 inline,
+164 regressions, two previous review regressions and eight timeout/STOP checks)
+in Edge. Independent review found a held-service timeout losing its visible
+unconfirmed warning. It was fixed and independently rechecked, with no remaining
+findings. The beta 5 candidate differs from that reviewed and committed
 implementation only in its version header and includes complete license notices.
 The owner confirmed installing beta 2 through HACS, loading without errors or
 observed movement, and passive inline menu/expansion use. These are observations,
 not a server-file hash or proof of physical command delivery. Earlier motor checks
 concern earlier builds. Later owner reports and screenshots show the responsive
 arrows in HA, and the owner independently reported working arrows and STOP, without
-a captured service trace or server-file hash. Beta 4 filled sliders have only
-local tests and have not been tested on real motors or native mobile browsers.
+a captured service trace or server-file hash. Owner screenshots of the filled-slider
+build prompted this UX revision; they do not establish a successful beta 5 smoke
+test. Beta 5 has only local tests and no real-device verification.
 
 | Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -384,7 +380,7 @@ local tests and have not been tested on real motors or native mobile browsers.
 | Android                                                                        | Passive HA app check on a Pixel 9 Pro with an Android beta. Exact Android/app/WebView builds and native touch command delivery are unverified.                                                                                                                                                                                   |
 | Unsupported tilt, unavailable entities, partial failures, bidirectional motors | Automated capability, dispatch, progress and UI mocks. No suitable real devices were available for these cases. SVG bidirectional mapping does not establish motor compatibility.                                                                                                                                                |
 | Accessibility and browsers                                                     | Native keyboard, focus, DOM/SSR, simulated input events, emulated touch and mock theme contrast checked in Edge. Actual screen readers, other browser engines and forced CSS fallbacks are unverified.                                                                                                                           |
-| Release artifact                                                               | The beta 1 and beta 3 public JS assets matched their reviewed builds byte for byte. The beta 4 bundle has complete license notices and matches the reviewed implementation except for its version header. Compare a downloaded beta 4 asset with the SHA256 in its release notes.                                                |
+| Release artifact                                                               | Public beta 1, 3 and 4 JS assets matched their reviewed builds byte for byte. The beta 5 local candidate matches the reviewed implementation except for its version header and includes complete licenses; its public asset has not been published.                                                                              |
 | HACS                                                                           | Owner confirmed beta 1 installation, then updating to beta 2 with one resource and passive loading/menu/expansion without errors or observed movement on HACS 2.0.5 / frontend 20250128065759. Earlier beta 1 checks included the editor. HA server-file hash, actual rollback and minimum supported versions remain unverified. |
 
 The earlier owner-reported HA version was 2026.10.2; the later description
