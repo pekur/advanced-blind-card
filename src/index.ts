@@ -1406,7 +1406,7 @@ export class AdvancedBlindCard extends LitElement {
     @container blind-card (max-width: 315px) { .sliders { grid-template-columns: minmax(0, 1fr); } }
     .row.inline { padding:5px; }
     ha-card > .row.inline + .row.inline { margin-top:6px; }
-    .inline-grid { display:grid; grid-template-columns:minmax(100px, 1.2fr) minmax(0, 2fr) auto; gap:6px; align-items:center; }
+    .inline-grid { display:grid; grid-template-columns:minmax(80px, 96px) minmax(0, 1fr) auto; gap:6px; align-items:center; }
     .inline-grid .heading { position:relative; margin:0; gap:0; min-width:0; }
     .inline-grid .heading-details { position:absolute; inset:0; display:flex; justify-content:flex-end; align-items:center; padding:0; border:0; border-radius:4px; background:transparent; text-align:start; width:calc(100% + 4px); }
     .inline-grid .heading-details:hover { background:transparent; }
@@ -1472,8 +1472,8 @@ export class AdvancedBlindCard extends LitElement {
     .action-menu button { display:flex; width:100%; min-height:44px; gap:8px; padding:8px; border:0; text-align:start; align-items:center;
       background:var(--secondary-background-color, #f5f7f9); font-size:14px; }
     @container blind-card (max-width:430px) {
-      .inline-arrows { display:none; }
-      .inline-actions .menu-toggle { display:block; }
+      .inline-arrows { display:flex; height:44px; gap:6px; }
+      .inline-actions .inline-arrow { height:44px; min-height:44px; }
       .inline-grid { grid-template-columns:minmax(0,1fr) auto; row-gap:0; }
       .inline-grid .heading { grid-column:1; grid-row:1; }
       .inline-grid .inline-actions { grid-column:2; grid-row:1; }

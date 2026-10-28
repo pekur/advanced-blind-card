@@ -8,6 +8,8 @@ synchronizes motors.
 **Latest published beta: [0.1.0-beta.7](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.7).**
 Beta 7 adds tolerance-based progress for position and tilt. Initial owner-operated
 Overkiz checks have been completed; other real-world configurations remain unverified.
+The local beta 8 candidate adds direct mobile arrows and a narrower desktop name
+column; it has not been published or tested on actual devices.
 The default layout remains `detailed`.
 See [verification and limits](#verification-and-limits) before using it with devices.
 
@@ -222,19 +224,14 @@ blinds:
   - entity: cover.office
 ```
 
-With `show_buttons: true`, inline Open / Close commands use stacked **↑ / ↓** buttons
-when the card is wider than 430 px, keeping **⋮** at 430 px or narrower. The arrows
-are 44 × 28 px with a 4 px gap, fitting the existing 60 px control area without
-increasing row height. Narrow-card menu and STOP targets remain 44 × 44 px.
-Beta 2 used the **⋮** menu at all widths; existing YAML needs no change.
-With `show_buttons: false`, both arrow and menu variants are hidden; STOP stays directly
-accessible, including while a movement response is pending. Opening/closing the
-menu or expanding a group sends no command. Opening a menu cancels active slider
-edits before focus changes. Direct arrows discard active slider previews before
-sending their command. Escape closes the menu and restores focus; arrow keys
-navigate its actions. A fallback is included for browsers without the Popover API.
-The fallback remains subject to clipping and stacking contexts imposed by enclosing
-dashboard components.
+In the current unpublished source, `show_buttons: true` shows direct **↑ / ↓**
+buttons at all widths: side by side at 430 px or narrower, stacked above that.
+Mobile arrows and STOP have 44 × 44 px targets; the stacked desktop arrows are
+44 × 28 px. The name column is narrower on desktop to leave more space for sliders.
+With `show_buttons: false`, arrows are hidden while STOP remains directly accessible,
+including while a movement response is pending. Expanding a group sends no command;
+direct arrows cancel an unfinished slider preview before sending their own command.
+Published beta 7 instead uses a **⋮** menu on narrow cards. No YAML change is needed.
 
 Six ordinary collapsed rows measure 462 px high at 490 px wide in the local
 mock-browser fixture. Expanded members, long names, errors, motion and unresolved
