@@ -182,6 +182,8 @@ Nevytvářet automaticky `next-implementer-prompt.md`, přepisované handoff sou
 
 ## 9. Schválená distribuční rozhodnutí a zbývající body
 
+- Workflow HACS bylo zveřejněno v commitu `8113439`, popis a témata repozitáře jsou doplněné. [Validace HACS](https://github.com/pekur/advanced-blind-card/actions/runs/40835737186) prošla bez ignorovaných kontrol. Verze `0.1.1` je připravována lokálně jako následné vydání pro žádost do katalogu, bez změn runtime a YAML API; dosud není vydaná.
+
 - Další schválený cíl: zařazení do výchozího katalogu HACS, kategorie `plugin`. Lokálně je připravena HACS Action bez ignorovaných kontrol. Před podáním žádosti zbývá schválené zveřejnění workflow, doplnění popisu a témat repozitáře, úspěšný běh validace a následné nové vydání. PR do `hacs/default` musí obsahovat odkazy na skutečně úspěšný běh a toto vydání; podání i publikace vyžadují samostatný souhlas vlastníka. Zařazení není dosud schválené správci HACS.
 
 - První stabilní verze `0.1.0` byla zveřejněna po nezávislé revizi a samostatném souhlasu vlastníka. Vlastník 2026-10-29 přijal zdokumentovaná omezení a potvrdil instalaci přes HACS i pasivní načtení a rozbalení/sbalení obou skupin bez chyby a pozorovaného pohybu. Runtime chování a konfigurace odpovídají betě 10; stažený veřejný JS odpovídá zrevidovanému sestavení. Podpora dalších integrací, minimálních HA/HACS verzí a zbývající neověřené případy se tím neprohlašují za ověřené.

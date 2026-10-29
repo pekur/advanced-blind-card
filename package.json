@@ -1,6 +1,6 @@
 {
   "name": "advanced-blind-card",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Home Assistant dashboard card for individual and grouped blinds.",
   "private": true,
   "license": "MIT",

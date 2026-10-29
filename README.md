@@ -6,6 +6,10 @@ Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
 **Latest stable release: [0.1.0](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0).**
+Version **0.1.1** is being prepared for HACS catalog submission. It adds repository
+validation with HACS Action, with no ignored checks. Runtime behavior and YAML
+configuration are unchanged from 0.1.0. Default catalog inclusion is still pending.
+
 Version **0.1.0** keeps the
 beta 10 runtime behavior and configuration, and adds repeatable browser smoke
 checks for developers. Known verification limits below still apply.
