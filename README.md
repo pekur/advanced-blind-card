@@ -5,18 +5,19 @@ sliders, graduated slat scales, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Latest published beta: [0.1.0-beta.8](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.8).**
+**Latest published beta: [0.1.0-beta.9](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.9).**
 Beta 8 adds direct mobile arrows and a narrower desktop name column. Beta 7 added
 tolerance-based progress for position and tilt; initial owner-operated Overkiz
 checks have been completed. Other real-world configurations remain unverified.
 The default layout remains `detailed`.
-The local beta 9 candidate also gives the detailed layout the same slider style
-as inline; the image below shows this unpublished version.
+Beta 9 gives the detailed layout the same slider style as inline.
+The unpublished beta 10 candidate fixes mixed-group visibility when idle values
+are hidden and corrects the inline layout description in the editor.
 See [verification and limits](#verification-and-limits) before using it with devices.
 
 ![Advanced Blind Card showing a single blind and an expanded group](images/advanced-blind-card.png)
 
-Example from the locally built card with simulated entities and generic names.
+Example from the card with simulated entities and generic names.
 
 ## Configuration
 
@@ -67,10 +68,10 @@ or a cancelled pointer gesture discards the preview. Incoming state updates do n
 interrupt an active edit. A keyboard edit also commits on focus loss.
 Switching away from the page or losing pointer capture discards an active drag.
 
-In the current unpublished source both layouts use a graduated tilt scale. It
+Both layouts use a graduated tilt scale. It
 illustrates the configured visual mapping across the track, not a measured
-physical angle; service values are never inverted. Published beta 8 still uses
-a separate stacked-slats illustration in the detailed layout.
+physical angle; service values are never inverted. Beta 8 used a separate
+stacked-slats illustration in the detailed layout.
 Unknown values are labeled and cannot send slider commands. Actions require the
 entity's matching capability, an available service, and a connected Home Assistant.
 STOP independently invokes supported lift-stop and tilt-stop services and remains
@@ -193,9 +194,8 @@ are independent of the step size.
 
 ## Layouts
 
-The default `layout: detailed` uses the tile layout. In the current unpublished
-source it uses the same graduated sliders as inline; published beta 8 retains
-its earlier detailed controls. The optional
+The default `layout: detailed` uses the tile layout. Since beta 9 it uses the same
+graduated sliders as inline; beta 8 retained its earlier detailed controls. The optional
 `layout: inline` keeps both sliders, supported STOP and Open / Close controls
 in one row when space permits. On narrow cards the sliders move below the
 heading. The group arrow expands directly to members, whose layout inherits from
@@ -254,7 +254,7 @@ distinguishes owner observations from local verification.
 ### Detailed tile layout
 
 The position and tilt controls sit side by side, switching to a single column
-in a narrow card. The current local version uses graduated tilt and filled
+in a narrow card. Beta 9 uses graduated tilt and filled
 position tracks in this layout. Expanded members
 use a separate background, and supported STOP remains available with Open / Close
 hidden. This layout uses the existing configuration options.
@@ -298,14 +298,14 @@ updates never send motor commands.
 
 For a manual installation, [build the card](#development) from source or
 download `advanced-blind-card.js` from the
-[beta 8 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.8).
+[beta 9 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.9).
 Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0-beta.8
+/local/advanced-blind-card.js?v=0.1.0-beta.9
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -334,7 +334,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.8**. Check that the download dialog names this tag rather than a
+   **v0.1.0-beta.9**. Check that the download dialog names this tag rather than a
    commit. If this beta is not offered, check the release and any HACS error;
    do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL
@@ -400,6 +400,13 @@ themes, including an expanded group, and reported that the controls work well.
 These observations do not include a captured service trace or HA server-file hash.
 The beta 8 candidate passed build, Biome, 153 Node tests and 178 simulated browser
 scenarios; the downloaded public JS matched the independently reviewed artifact.
+
+For beta 9, the owner confirmed passive loading and group expansion without error
+or observed movement, and supplied screenshots of the detailed layout. The owner
+also configured a second group; screenshots show its reported mixed position range.
+These observations are not an HA server-file hash or a service trace. The beta 9
+candidate passed build, Biome, 153 Node tests, 174 adapted browser regressions and
+17 focused scenarios; the downloaded public JS matched the reviewed artifact.
 
 | Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

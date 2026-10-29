@@ -390,7 +390,7 @@ export class AdvancedBlindCard extends LitElement {
       html`<section class=${`row${view.parent ? " child" : ""}${inline ? " inline" : ""}`} data-row=${view.id} data-layout=${view.settings.layout} aria-label=${this.nameFor(view)}>
       ${inline ? html`<div class="inline-grid">${inlineHeading}${sliders}<div class="inline-actions">${view.settings.showButtons ? html`<div class="inline-arrows">${this.button(view, "open", this.t("open"), "↑", false, true)}${this.button(view, "close", this.t("close"), "↓", false, true)}</div>${this.menuButton(view)}` : nothing}${this.stopButton(view)}${expand}</div></div>` : html`<div class="heading">${heading}${expand}</div>`}
       ${
-        inline && group && view.settings.showValues
+        inline && group
           ? (["position", "tilt"] as const).map((axis) => {
               const known = group.members
                 .map((member) => {

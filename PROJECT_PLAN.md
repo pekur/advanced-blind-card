@@ -6,7 +6,7 @@ Typ: samostatná open-source custom Lovelace karta pro Home Assistant, distribuo
 
 ## 1. Zadání a rozhodnutí
 
-Vytvořit kompaktní kartu pro venkovní žaluzie, která přímo v dashboardu umožňuje ovládání **výšky** a **náklonu lamel** bez otevření dialogu More Info. Vodorovné posuvníky jsou vyhovující. Náklon musí mít živou grafickou vizualizaci lamel (preferovaně jednoduché SVG). Vzhled má respektovat standardní HA tile kartu, světlé/tmavé téma a mobilní rozložení.
+Vytvořit kompaktní kartu pro venkovní žaluzie, která přímo v dashboardu umožňuje ovládání **výšky** a **náklonu lamel** bez otevření dialogu More Info. Vodorovné posuvníky jsou vyhovující. Náklon má mít grafickou stupnici a živě zobrazovat aktuálně volenou či hlášenou hodnotu. Vzhled má respektovat standardní HA tile kartu, světlé/tmavé téma a mobilní rozložení.
 
 Karta musí podporovat jak jedinou `cover` entitu, tak **logicky sdruženou žaluzii tvořenou dvěma nebo více samostatnými motory**. Sdružený řádek se běžně chová jako jedna žaluzie; lze jej rozbalit a ovládat každou entitu samostatně. Rozbalení nemění stav motorů.
 
@@ -66,13 +66,11 @@ Podporovat dědění globálních nastavení a jejich přepsání na úrovni ř�
 
 ## 4. UI / UX
 
-Výchozí řádek: ikona, jméno, stav, posuvník výšky, posuvník náklonu se SVG lamelami a volitelné ovladače nahoru/stop/dolů. Šířka se adaptuje: desktop dovolí dva posuvníky vedle sebe; mobil je může skládat pod sebe. Žádný detailový dialog není potřeba pro základní ovládání.
+Výchozí řádek: ikona, jméno, stav, posuvník výšky, posuvník náklonu s grafickou stupnicí a volitelné ovladače nahoru/stop/dolů. Šířka se adaptuje: desktop dovolí dva posuvníky vedle sebe; mobil je může skládat pod sebe. Žádný detailový dialog není potřeba pro základní ovládání.
 
 U skupiny zobrazit indikátor počtu motorů a šipku rozbalení. Sbalený řádek zobrazuje společné ovládání; rozbalený ukazuje jednotlivé motory. Rozbalení je výchozím stavem vypnuté. Stav rozbalení stačí udržet v běžící instanci karty, bez trvalého ukládání.
 
-SVG lamely mají viditelně měnit úhel při přetahování náklonu i při aktualizaci stavu z HA. Pro jednosměrné/obousměrné režimy použít stejnou komponentu a konfigurovatelné mapování. Rozlišení `unknown`, `unavailable`, `opening`, `closing`, podporované/nespodporované funkce. Otevřeno/zavřeno vs. 0/100 % přebírat ze skutečného HA stavu.
-
-Lamely v SVG uspořádat **nad sebou**, jako u horizontální žaluzie, nikoli vedle sebe (upřesněno vlastníkem 2026-10-25). Každá se naklání kolem vlastního středu; vizuální úhel 0° je vodorovný. U výchozího jednosměrného mapování odpovídá 100 % vodorovným lamelám. Celý blok náhledu nesmí být vyšší než samotný posuvník výšky nebo náklonu.
+Od bety 9 mají obě rozvržení pevnou odstupňovanou strukturu v posuvníku náklonu a pohyblivý jezdec; původní samostatné SVG bylo nahrazeno na základě schváleného návrhu vlastníka. Jednosměrné i obousměrné režimy používají konfigurovatelné mapování, kde 0° značí vodorovnou lamelu. Rozlišovat `unknown`, `unavailable`, `opening`, `closing` a podporované funkce; skutečné hodnoty přebírat z HA.
 
 **Zřetelná indikace pohybu a nedokončeného cíle (doplněno 2026-10-24, plánováno pro fázi 3):** U výšky i náklonu viditelně odlišit požadovanou cílovou hodnotu, skutečnou hodnotu hlášenou HA a průběh mezi nimi. Použít srozumitelný text a vizuální indikátor, nikoli pouze změnu barvy. Rozlišit odesílání příkazu, čekání na stav a pohyb potvrzený HA; samotné přijetí služby neznamená dokončení pohybu. Dokončení potvrzovat jen podle dostupných stavových dat, při zpoždění nebo chybějící zpětné vazbě přiznat nejistotu. U skupiny ukázat průběh jednotlivých členů a jejich nedokončené cíle, neoznačit celou skupinu za hotovou podle prvního motoru. Po STOP, chybě či nedostupnosti rozlišit přerušený nebo nepotvrzený výsledek; indikace nikdy sama neodesílá další příkazy ani nedorovnává cíl.
 
@@ -131,11 +129,12 @@ Bezpečnost interakcí: žádný náhodný pohyb po tapnutí do neovládací obl
 - Beta 5 zavedla texturu lamel a ztišení dokončených výsledků; tento vzhled byl následně nahrazen podle připomínek vlastníka. Od vydané bety 6 má posuvník náklonu stálou odstupňovanou strukturu odpovídající vizuálnímu mapování, nezalomené hodnoty cíle a úplné skupinové rozsahy. Zachovat STOP, neznámé a smíšené stavy i odeslání příkazu až po dokončení interakce.
 - Vydaná beta 7 po novém příslušném hlášení HA a přijetí příkazu vyhodnocuje polohu i náklon v toleranci ±2 procentní body po 2 sekundách ustálení, samostatně pro členy skupiny. Jde o odhad podle HA, nikoli potvrzení fyzického zastavení; později neplatný výsledek zůstává viditelný jako historický. Skutečně ověřené případy a omezení jsou v README. Dosud chybí reálné ověření tolerance polohy, rozdílných konečných hodnot členů a STOP v betě 7; další pohyby vyžadují samostatný souhlas vlastníka.
 - Vydaná beta 8 podle schválené makety zobrazuje na úzkých kartách přímé šipky vedle sebe a na desktopu ponechává více místa posuvníkům užším sloupcem názvu. Vlastník poskytl snímky telefonu a desktopu v obou tématech a uvedl, že ovladače fungují dobře; podrobnosti a limity ověření jsou v README.
+- Vydaná beta 9 sjednocuje posuvníky i v podrobném rozvržení a nahrazuje samostatný náhled SVG. Vlastník potvrdil pasivní načtení a rozbalení bez chyby a pohybu; podrobnosti a limity ověření jsou v README.
 
 ## 6. Akceptační kritéria
 
 1. Z dashboardu lze bez otevření detailu změnit výšku i náklon podporované žaluzie.
-2. SVG odpovídá změnám náklonu a lze nastavit alespoň jednosměrnou a obousměrnou vizualizaci.
+2. Stupnice náklonu a jezdec zobrazují odpovídající hodnotu; lze nastavit jednosměrné a obousměrné vizuální mapování.
 3. Jedna skupina dvou motorů se ve výchozím stavu zobrazuje jako jeden řádek a řídí oba motory.
 4. Po rozbalení lze každý motor řídit nezávisle; zpětné sbalení nic nepřestaví.
 5. Rozdílné hodnoty členů se nezaměňují za průměr; UI ukazuje rozsah nebo nejistotu.
