@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'">
+  <style>body{margin:8px;font:14px Arial,sans-serif}advanced-blind-card{display:block}</style>
+</head>
+<body>
+<script type="module">
+  import '/card.js';
+
+  window.calls = [];
+  const entity = (id, position) => ({entity_id:id,state:'open',attributes:{friendly_name:id,current_position:position,current_tilt_position:50,supported_features:255}});
+  window.hass = {
+    connected:true,language:'en',states:{'cover.one':entity('cover.one',20),'cover.two':entity('cover.two',60)},
+    services:{cover:Object.fromEntries(['set_cover_position','set_cover_tilt_position','open_cover','close_cover','stop_cover','stop_cover_tilt'].map(name=>[name,{}]))},
+    callService:async(domain,service,data,target)=>calls.push({domain,service,data,target})
+  };
+  window.card=document.createElement('advanced-blind-card');
+  card.setConfig({type:'custom:advanced-blind-card',layout:'inline',show_values:false,blinds:[{name:'Pair',expandable:true,entities:[{entity:'cover.one',name:'Left'},{entity:'cover.two',name:'Right'}]}]});
+  card.hass=hass;document.body.append(card);await card.updateComplete;window.ready=true;
+</script>
+</body>
+</html>

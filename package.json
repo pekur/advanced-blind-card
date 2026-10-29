@@ -12,7 +12,8 @@
   "scripts": {
     "build": "tsc --noEmit && node scripts/build.mjs",
     "check": "biome check .",
-    "test": "node --test"
+    "test": "node --test",
+    "test:browser": "node scripts/browser-smoke.mjs"
   },
   "dependencies": {
     "lit": "^3.3.1"

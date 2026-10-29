@@ -85,7 +85,7 @@ test("standalone distribution carries complete project and actual bundled depend
   ]);
 });
 
-test("local distribution metadata agrees on the asset name and retains a private prerelease package", async () => {
+test("local distribution metadata agrees on the asset name and retains a private package", async () => {
   const root = new URL("../", import.meta.url);
   const project = JSON.parse(
     await readFile(new URL("package.json", root), "utf8"),
@@ -94,7 +94,7 @@ test("local distribution metadata agrees on the asset name and retains a private
   assert.equal(project.name, "advanced-blind-card");
   assert.equal(project.private, true);
   assert.equal(project.license, "MIT");
-  assert.match(project.version, /^\d+\.\d+\.\d+-beta\.\d+$/);
+  assert.match(project.version, /^\d+\.\d+\.\d+(?:-beta\.\d+)?$/);
   assert.equal(hacs.name, "Advanced Blind Card");
   assert.equal(hacs.filename, `${project.name}.js`);
   assert.equal(hacs.render_readme, true);

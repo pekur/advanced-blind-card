@@ -451,6 +451,22 @@ the same TypeScript helpers as the card. It also checks that the browser bundle
 parses and has no external runtime dependencies. No DOM emulator, TypeScript loader,
 or extra test framework is used. Node tests do not establish browser or device
 compatibility; those require separate checks.
+
+An optional smoke suite exercises a real local Chromium-based browser against a
+loopback-only simulated HA fixture. Build first, then run:
+
+```sh
+pnpm test:browser
+```
+
+It uses Node's built-in APIs and an existing Chrome, Chromium or
+Edge installation, without a new test library. If the browser is not in a
+standard location, set `CHROME_PATH` to its executable. A missing browser or a
+bundle with outdated code or version fails the command rather than skipping it.
+License notices are checked separately by `pnpm test`. The suite covers passive group
+expansion, a mixed range, mobile geometry, release-only group dispatch, STOP and
+an unavailable member. It does not replace tests on real devices, screen readers
+or browsers outside the Chromium family. It runs separately from `pnpm test`.
 The bundle is written to `dist/advanced-blind-card.js`. This single generated file
 is tracked for initial HACS repository validation; commit the freshly built bundle
 with source changes that affect it. It uses LF line endings to preserve its bytes
