@@ -5,8 +5,8 @@ sliders, graduated slat scales, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Latest published beta: [0.1.0-beta.10](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.10).**
-The local **0.1.0 stable-release candidate** is not yet published. It keeps the
+**Latest stable release: [0.1.0](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0).**
+Version **0.1.0** keeps the
 beta 10 runtime behavior and configuration, and adds repeatable browser smoke
 checks for developers. Known verification limits below still apply.
 Beta 8 adds direct mobile arrows and a narrower desktop name column. Beta 7 added
@@ -301,14 +301,14 @@ updates never send motor commands.
 
 For a manual installation, [build the card](#development) from source or
 download `advanced-blind-card.js` from the
-[beta 10 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.10).
+[0.1.0 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0).
 Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0-beta.10
+/local/advanced-blind-card.js?v=0.1.0
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -337,7 +337,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.10**. Check that the download dialog names this tag rather than a
+   **v0.1.0**. Check that the download dialog names this tag rather than a
    commit. If this beta is not offered, check the release and any HACS error;
    do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL
@@ -417,6 +417,14 @@ verified in simulation but was not separately reported on real HA. No HA server
 file hash or service trace was captured during these checks. The beta 10 candidate
 passed build, Biome, 153 Node tests, 176 adapted browser regressions and 17 focused
 scenarios; the downloaded public JS matched the reviewed artifact.
+
+Version 0.1.0 was published as a stable release after independent candidate review
+and explicit maintainer acceptance of the documented limits. Its downloaded JS
+matched the reviewed build; only the version header differs from beta 10. The
+owner confirmed installation through HACS and successful passive loading and
+expansion/collapse of both groups without errors or observed motor movement.
+This is an owner report, not an HA server-file hash or a service trace, and does
+not close the other verification gaps below.
 
 | Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
