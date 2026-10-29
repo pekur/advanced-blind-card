@@ -182,6 +182,8 @@ Nevytvářet automaticky `next-implementer-prompt.md`, přepisované handoff sou
 
 ## 9. Schválená distribuční rozhodnutí a zbývající body
 
+- Místně se připravuje první stabilní verze `0.1.0` se stejným runtime chováním a konfigurací jako beta 10. Vlastník 2026-10-29 výslovně přijal zdokumentovaná omezení a schválil dokončení podkladů a lokální commit. Podpora dalších integrací, minimálních HA/HACS verzí a zbývající neověřené případy se tím neprohlašují za ověřené. Publikace vyžaduje samostatný souhlas vlastníka.
+
 - Schválený veřejný název: **Advanced Blind Card**, název repozitáře `advanced-blind-card`; lokální adresář se nepřejmenovává.
 - Veřejný repozitář: `https://github.com/pekur/advanced-blind-card`; vytvoření a první publikace byly samostatně schválené vlastníkem.
 - Schválená licence: **MIT**, copyright **2026 Petr Kurka**. Přibalené knihovny si zachovávají vlastní licenční oznámení v distribuovaném JS.

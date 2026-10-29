@@ -6,6 +6,9 @@ Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
 **Latest published beta: [0.1.0-beta.10](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.10).**
+The local **0.1.0 stable-release candidate** is not yet published. It keeps the
+beta 10 runtime behavior and configuration, and adds repeatable browser smoke
+checks for developers. Known verification limits below still apply.
 Beta 8 adds direct mobile arrows and a narrower desktop name column. Beta 7 added
 tolerance-based progress for position and tilt; initial owner-operated Overkiz
 checks have been completed. Other real-world configurations remain unverified.
