@@ -5,8 +5,8 @@ sliders, graduated slat scales, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Latest stable release: [0.1.0](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0).**
-Version **0.1.1** is being prepared for HACS catalog submission. It adds repository
+**Latest stable release: [0.1.1](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.1).**
+Version **0.1.1** prepares for HACS catalog submission. It adds repository
 validation with HACS Action, with no ignored checks. Runtime behavior and YAML
 configuration are unchanged from 0.1.0. Default catalog inclusion is still pending.
 
@@ -305,14 +305,14 @@ updates never send motor commands.
 
 For a manual installation, [build the card](#development) from source or
 download `advanced-blind-card.js` from the
-[0.1.0 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0).
+[0.1.1 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.1).
 Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0
+/local/advanced-blind-card.js?v=0.1.1
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -341,7 +341,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0**. Check that the download dialog names this tag rather than a
+   **v0.1.1**. Check that the download dialog names this tag rather than a
    commit. If this beta is not offered, check the release and any HACS error;
    do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL
