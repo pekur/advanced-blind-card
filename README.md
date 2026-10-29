@@ -5,13 +5,13 @@ sliders, graduated slat scales, expandable groups and supported STOP controls.
 Group readings show ranges and uncertainty. Loading or expanding the card never
 synchronizes motors.
 
-**Latest published beta: [0.1.0-beta.9](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.9).**
+**Latest published beta: [0.1.0-beta.10](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.10).**
 Beta 8 adds direct mobile arrows and a narrower desktop name column. Beta 7 added
 tolerance-based progress for position and tilt; initial owner-operated Overkiz
 checks have been completed. Other real-world configurations remain unverified.
 The default layout remains `detailed`.
 Beta 9 gives the detailed layout the same slider style as inline.
-The unpublished beta 10 candidate fixes mixed-group visibility when idle values
+Beta 10 fixes mixed-group visibility when idle values
 are hidden and corrects the inline layout description in the editor.
 See [verification and limits](#verification-and-limits) before using it with devices.
 
@@ -298,14 +298,14 @@ updates never send motor commands.
 
 For a manual installation, [build the card](#development) from source or
 download `advanced-blind-card.js` from the
-[beta 9 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.9).
+[beta 10 release](https://github.com/pekur/advanced-blind-card/releases/tag/v0.1.0-beta.10).
 Copy the JS into `www/` within your
 Home Assistant configuration directory. This is a dashboard resource, not a
 `custom_components` integration.
 Register one **JavaScript module** dashboard resource:
 
 ```text
-/local/advanced-blind-card.js?v=0.1.0-beta.9
+/local/advanced-blind-card.js?v=0.1.0-beta.10
 ```
 
 Add a manual card using the [configuration above](#configuration), replacing the
@@ -334,7 +334,7 @@ selector was necessary to make HACS report **v0.1.0-beta.1** as installed.
 1. Add the repository URL above to HACS as a **Dashboard** custom repository.
 2. Open **Download**, or **Redownload** from the card's HACS menu if already
    installed. Expand the option for a different version and explicitly select
-   **v0.1.0-beta.9**. Check that the download dialog names this tag rather than a
+   **v0.1.0-beta.10**. Check that the download dialog names this tag rather than a
    commit. If this beta is not offered, check the release and any HACS error;
    do not substitute a commit.
 3. When migrating from a manual installation, save its `/local/` resource URL
@@ -407,6 +407,13 @@ also configured a second group; screenshots show its reported mixed position ran
 These observations are not an HA server-file hash or a service trace. The beta 9
 candidate passed build, Biome, 153 Node tests, 174 adapted browser regressions and
 17 focused scenarios; the downloaded public JS matched the reviewed artifact.
+
+For beta 10, the owner reported successful passive loading, editor description
+and mixed-range display checks. The `show_values: false` mixed-range case was
+verified in simulation but was not separately reported on real HA. No HA server
+file hash or service trace was captured during these checks. The beta 10 candidate
+passed build, Biome, 153 Node tests, 176 adapted browser regressions and 17 focused
+scenarios; the downloaded public JS matched the reviewed artifact.
 
 | Area                                                                           | Evidence and remaining limits                                                                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

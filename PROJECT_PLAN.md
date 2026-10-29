@@ -130,6 +130,7 @@ Bezpečnost interakcí: žádný náhodný pohyb po tapnutí do neovládací obl
 - Vydaná beta 7 po novém příslušném hlášení HA a přijetí příkazu vyhodnocuje polohu i náklon v toleranci ±2 procentní body po 2 sekundách ustálení, samostatně pro členy skupiny. Jde o odhad podle HA, nikoli potvrzení fyzického zastavení; později neplatný výsledek zůstává viditelný jako historický. Skutečně ověřené případy a omezení jsou v README. Dosud chybí reálné ověření tolerance polohy, rozdílných konečných hodnot členů a STOP v betě 7; další pohyby vyžadují samostatný souhlas vlastníka.
 - Vydaná beta 8 podle schválené makety zobrazuje na úzkých kartách přímé šipky vedle sebe a na desktopu ponechává více místa posuvníkům užším sloupcem názvu. Vlastník poskytl snímky telefonu a desktopu v obou tématech a uvedl, že ovladače fungují dobře; podrobnosti a limity ověření jsou v README.
 - Vydaná beta 9 sjednocuje posuvníky i v podrobném rozvržení a nahrazuje samostatný náhled SVG. Vlastník potvrdil pasivní načtení a rozbalení bez chyby a pohybu; podrobnosti a limity ověření jsou v README.
+- Vydaná beta 10 opravuje viditelnost smíšeného rozsahu při `show_values: false` a popis editoru. Vlastník potvrdil pasivní kontrolu; samostatné ověření kombinace `show_values: false` na reálném HA nebylo zaznamenáno. Podrobnosti a limity jsou v README.
 
 ## 6. Akceptační kritéria
 
